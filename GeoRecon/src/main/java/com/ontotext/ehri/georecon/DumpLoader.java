@@ -47,11 +47,11 @@ public class DumpLoader {
             long time = System.currentTimeMillis() - start;
             LOGGER.info("dump loaded in " + time + " ms");
         } catch (RepositoryException e) {
-            LOGGER.error("exception while loading dump");
+            LOGGER.error("exception while loading dump", e);
         } catch (SailException e) {
-            LOGGER.error("exception while loading dump");
+            LOGGER.error("exception while loading dump", e);
         } catch (IOException e) {
-            LOGGER.error("exception while loading dump");
+            LOGGER.error("exception while loading dump", e);
         }
     }
 
@@ -91,13 +91,13 @@ public class DumpLoader {
             }
 
         } catch (RDFHandlerException e) {
-            LOGGER.error("exception while adding triples");
+            LOGGER.error("exception while adding triples", e);
         } catch (RepositoryException e) {
-            LOGGER.error("exception while adding triples");
+            LOGGER.error("exception while adding triples", e);
         } catch (RDFParseException e) {
-            LOGGER.error("exception while adding triples");
+            LOGGER.error("exception while adding triples", e);
         } catch (IOException e) {
-            LOGGER.error("exception while adding triples");
+            LOGGER.error("exception while adding triples", e);
         } finally {
             connection.close();
             repository.shutDown();
