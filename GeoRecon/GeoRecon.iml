@@ -37,7 +37,7 @@
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-query:2.8.6" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-rio-trig:2.8.6" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-rio-turtle:2.8.6" level="project" />
-    <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-sail-memory:2.8.6" level="project" />
+    <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-sail-nativerdf:2.8.6" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-sail-base:2.8.6" level="project" />
     <orderEntry type="library" name="Maven: org.openrdf.sesame:sesame-sail-inferencer:2.8.6" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Maven: org.openrdf.sesame:sesame-queryparser-serql:2.8.6" level="project" />

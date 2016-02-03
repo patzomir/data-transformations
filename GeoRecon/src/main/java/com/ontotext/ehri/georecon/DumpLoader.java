@@ -8,7 +8,8 @@ import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.*;
 import org.openrdf.rio.helpers.StatementCollector;
-import org.openrdf.sail.memory.MemoryStore;
+import org.openrdf.sail.SailException;
+import org.openrdf.sail.nativerdf.NativeStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +23,7 @@ public class DumpLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DumpLoader.class);
 
     // number of places to add in one batch
-    private static final int BATCH_SIZE = 100000; // ~8GB memory
+    private static final int BATCH_SIZE = 250000;
 
     /**
      * Run the program.
@@ -45,8 +46,12 @@ public class DumpLoader {
             loadDump(dump, repo);
             long time = System.currentTimeMillis() - start;
             LOGGER.info("dump loaded in " + time + " ms");
+        } catch (RepositoryException e) {
+            LOGGER.error("exception while loading dump");
+        } catch (SailException e) {
+            LOGGER.error("exception while loading dump");
         } catch (IOException e) {
-            LOGGER.error("exception while loading dump", e);
+            LOGGER.error("exception while loading dump");
         }
     }
 
@@ -54,12 +59,20 @@ public class DumpLoader {
      * Load a GeoNames RDF dump into a Sesame repository.
      * @param dump The dump file.
      * @param repo The repository directory.
+     * @throws RepositoryException
+     * @throws SailException
      * @throws IOException
      */
-    private static void loadDump(File dump, File repo) throws IOException {
+    private static void loadDump(File dump, File repo) throws RepositoryException, SailException, IOException {
         FileReader fileReader = new FileReader(dump);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         RDFParser parser = Rio.createParser(RDFFormat.RDFXML);
+
+        // repository which stores data directly to disk
+        NativeStore store = new NativeStore(repo);
+        Repository repository = new SailRepository(store);
+        repository.initialize();
+        RepositoryConnection connection = repository.getConnection();
 
         long start = System.currentTimeMillis();
         int batchNum = 0;
@@ -67,41 +80,28 @@ public class DumpLoader {
 
         try {
 
-            // collect triples in batches
+            // add triples in batches
             while ((triples = collectTriples(bufferedReader, parser, BATCH_SIZE)).size() > 0) {
-                batchNum++;
-
-                // open repository
-                LOGGER.info("[" + batchNum + "] opening repository...");
-                MemoryStore store = new MemoryStore(repo);
-                Repository repository = new SailRepository(store);
-                repository.initialize();
-                RepositoryConnection connection = repository.getConnection();
-
-                // add triples
-                LOGGER.info("[" + batchNum + "] adding triples...");
                 connection.add(triples);
-
-                // close repository
-                LOGGER.info("[" + batchNum + "] closing repository...");
-                connection.close();
-                repository.shutDown();
-
+                batchNum++;
                 int numAdded = BATCH_SIZE * batchNum;
                 long time = System.currentTimeMillis() - start;
-                LOGGER.info("[" + batchNum + "] finished in " + time + " ms (" + numAdded + " places added)");
+                LOGGER.info("batch " + batchNum + " finished in " + time + " ms (" + numAdded + " places added)");
                 start = System.currentTimeMillis();
             }
 
         } catch (RDFHandlerException e) {
-            LOGGER.error("exception while adding triples", e);
+            LOGGER.error("exception while adding triples");
         } catch (RepositoryException e) {
-            LOGGER.error("exception while adding triples", e);
+            LOGGER.error("exception while adding triples");
         } catch (RDFParseException e) {
-            LOGGER.error("exception while adding triples", e);
+            LOGGER.error("exception while adding triples");
         } catch (IOException e) {
-            LOGGER.error("exception while adding triples", e);
+            LOGGER.error("exception while adding triples");
         } finally {
+            connection.close();
+            repository.shutDown();
+            store.shutDown();
             bufferedReader.close();
             fileReader.close();
         }
