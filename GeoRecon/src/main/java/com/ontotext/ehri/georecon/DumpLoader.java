@@ -8,7 +8,6 @@ import org.openrdf.repository.RepositoryException;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.*;
 import org.openrdf.rio.helpers.StatementCollector;
-import org.openrdf.sail.SailException;
 import org.openrdf.sail.memory.MemoryStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +21,8 @@ import java.net.URL;
 public class DumpLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DumpLoader.class);
 
-    // number of places to store in one transaction
-    private static final int BATCH_SIZE = 100000;
+    // number of places to add in one batch
+    private static final int BATCH_SIZE = 100000; // ~8GB memory
 
     /**
      * Run the program.
@@ -31,6 +30,7 @@ public class DumpLoader {
      */
     public static void main(String[] args) {
 
+        // check arguments
         if (args.length != 2) {
             System.out.println("USAGE: java " + DumpLoader.class.getName() + " <dump file> <repo dir>");
             System.exit(0);
@@ -39,72 +39,68 @@ public class DumpLoader {
         File dump = new File(args[0]);
         File repo = new File(args[1]);
 
-        // in-memory store that syncs data to a directory
-        MemoryStore store = new MemoryStore(repo);
-        store.setSyncDelay(-1); // disable auto-sync
-        Repository repository = new SailRepository(store);
-
         try {
-            repository.initialize();
-            LOGGER.info("Repository initialized!");
-            RepositoryConnection connection = repository.getConnection();
-            LOGGER.info("Connection opened!");
-
-            try {
-                long start = System.currentTimeMillis();
-                loadDump(dump, connection, store);
-                long time = System.currentTimeMillis() - start;
-                LOGGER.info("Dump loaded in " + time + " ms!");
-            } catch (IOException e) {
-                LOGGER.error("Caught exception!", e);
-            } finally {
-                connection.close();
-                LOGGER.info("Connection closed!");
-                repository.shutDown();
-                LOGGER.info("Repository shut down!");
-            }
-
-        } catch (RepositoryException e) {
-            LOGGER.error("Caught exception!", e);
+            LOGGER.info("loading dump...");
+            long start = System.currentTimeMillis();
+            loadDump(dump, repo);
+            long time = System.currentTimeMillis() - start;
+            LOGGER.info("dump loaded in " + time + " ms");
+        } catch (IOException e) {
+            LOGGER.error("exception while loading dump", e);
         }
     }
 
     /**
-     * Load a GeoNames RDF dump file.
-     * @param dump The GeoNames RDF dump file.
-     * @param connection Connection to a Sesame repository.
-     * @param store The in-memory store (for manual sync).
+     * Load a GeoNames RDF dump into a Sesame repository.
+     * @param dump The dump file.
+     * @param repo The repository directory.
      * @throws IOException
      */
-    private static void loadDump(File dump, RepositoryConnection connection, MemoryStore store) throws IOException {
+    private static void loadDump(File dump, File repo) throws IOException {
         FileReader fileReader = new FileReader(dump);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         RDFParser parser = Rio.createParser(RDFFormat.RDFXML);
 
-        int timesAdded = 0;
+        long start = System.currentTimeMillis();
+        int batchNum = 0;
         Model triples;
 
         try {
 
-            // add triples to repository in batches
+            // collect triples in batches
             while ((triples = collectTriples(bufferedReader, parser, BATCH_SIZE)).size() > 0) {
+                batchNum++;
+
+                // open repository
+                LOGGER.info("[" + batchNum + "] opening repository...");
+                MemoryStore store = new MemoryStore(repo);
+                Repository repository = new SailRepository(store);
+                repository.initialize();
+                RepositoryConnection connection = repository.getConnection();
+
+                // add triples
+                LOGGER.info("[" + batchNum + "] adding triples...");
                 connection.add(triples);
-                store.sync();
-                timesAdded++;
-                int totalAdded = BATCH_SIZE * timesAdded;
-                LOGGER.info(totalAdded + " places added so far");
+
+                // close repository
+                LOGGER.info("[" + batchNum + "] closing repository...");
+                connection.close();
+                repository.shutDown();
+
+                int numAdded = BATCH_SIZE * batchNum;
+                long time = System.currentTimeMillis() - start;
+                LOGGER.info("[" + batchNum + "] finished in " + time + " ms (" + numAdded + " places added)");
+                start = System.currentTimeMillis();
             }
 
-        } catch (IOException e) {
-            LOGGER.error("Caught exception!", e);
-        } catch (RepositoryException e) {
-            LOGGER.error("Caught exception!", e);
         } catch (RDFHandlerException e) {
-            LOGGER.error("Caught exception!", e);
+            LOGGER.error("exception while adding triples", e);
+        } catch (RepositoryException e) {
+            LOGGER.error("exception while adding triples", e);
         } catch (RDFParseException e) {
-            LOGGER.error("Caught exception!", e);
-        } catch (SailException e) {
-            LOGGER.error("Caught exception!", e);
+            LOGGER.error("exception while adding triples", e);
+        } catch (IOException e) {
+            LOGGER.error("exception while adding triples", e);
         } finally {
             bufferedReader.close();
             fileReader.close();
