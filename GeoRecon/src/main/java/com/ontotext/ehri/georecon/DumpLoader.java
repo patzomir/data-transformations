@@ -16,10 +16,19 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.URL;
 
+/**
+ * Load the GeoNames RDF dump ( http://download.geonames.org/all-geonames-rdf.zip ) into a Sesame repository.
+ */
 public class DumpLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DumpLoader.class);
+
+    // number of places to store in one transaction
     private static final int BATCH_SIZE = 100000;
 
+    /**
+     * Run the program.
+     * @param args Command-line arguments: <dump file> <repo dir>.
+     */
     public static void main(String[] args) {
 
         if (args.length != 2) {
@@ -30,8 +39,9 @@ public class DumpLoader {
         File dump = new File(args[0]);
         File repo = new File(args[1]);
 
+        // in-memory store that syncs data to a directory
         MemoryStore store = new MemoryStore(repo);
-        store.setSyncDelay(-1);
+        store.setSyncDelay(-1); // disable auto-sync
         Repository repository = new SailRepository(store);
 
         try {
@@ -59,6 +69,13 @@ public class DumpLoader {
         }
     }
 
+    /**
+     * Load a GeoNames RDF dump file.
+     * @param dump The GeoNames RDF dump file.
+     * @param connection Connection to a Sesame repository.
+     * @param store The in-memory store (for manual sync).
+     * @throws IOException
+     */
     private static void loadDump(File dump, RepositoryConnection connection, MemoryStore store) throws IOException {
         FileReader fileReader = new FileReader(dump);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
@@ -69,6 +86,7 @@ public class DumpLoader {
 
         try {
 
+            // add triples to repository in batches
             while ((triples = collectTriples(bufferedReader, parser, BATCH_SIZE)).size() > 0) {
                 connection.add(triples);
                 store.sync();
@@ -93,6 +111,16 @@ public class DumpLoader {
         }
     }
 
+    /**
+     * Collect a batch of RDF triples.
+     * @param reader An open BufferedReader for reading the dump file.
+     * @param parser An RDFParser for parsing the RDF content.
+     * @param maxNumPlaces Maximum number of GeoNames places to parse.
+     * @return The collected RDF triples.
+     * @throws IOException
+     * @throws RDFParseException
+     * @throws RDFHandlerException
+     */
     private static Model collectTriples(BufferedReader reader, RDFParser parser, int maxNumPlaces)
             throws IOException, RDFParseException, RDFHandlerException {
         Model triples = new LinkedHashModel();
@@ -103,6 +131,7 @@ public class DumpLoader {
         URL geoLink = null;
         String line;
 
+        // read each line in the RDF dump
         while (numPlaces < maxNumPlaces && (line = reader.readLine()) != null) {
             line = line.trim();
 
