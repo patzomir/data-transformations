@@ -6,5 +6,6 @@ import java.io.Serializable;
  * Relevant place types.
  */
 public enum PlaceType implements Serializable {
-    ADM, PCL, PPL
+    ADM, PCL, PPL,
+    OTHER;
 }

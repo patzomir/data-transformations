@@ -5,6 +5,9 @@ import com.ontotext.ehri.georecon.Tools;
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 /**
  * A place from GeoNames.
@@ -52,6 +55,40 @@ public class Place implements Comparable<Place>, Serializable {
 
     public Place getParent() {
         return parent;
+    }
+
+    /**
+     * Get the ancestors of this place.
+     * @return The ancestors in order from closest to furthest.
+     */
+    public Deque<Place> getAncestors() {
+        Deque<Place> ancestors = new LinkedList<Place>();
+        Place pointer = this;
+
+        while ((pointer = pointer.parent) != null) {
+            ancestors.add(pointer);
+        }
+
+        return ancestors;
+    }
+
+    public String ancestry() throws MalformedURLException {
+        StringBuilder ancestry = new StringBuilder();
+        StringBuilder indent = new StringBuilder();
+        Deque<Place> ancestors = getAncestors();
+        Iterator<Place> ancestorIterator = ancestors.descendingIterator();
+
+        while (ancestorIterator.hasNext()) {
+            Place ancestor = ancestorIterator.next();
+            ancestry.append(indent.toString());
+            ancestry.append(ancestor.toURL().toString());
+            ancestry.append("\n");
+            indent.append("  ");
+        }
+
+        ancestry.append(indent.toString());
+        ancestry.append(toURL().toString());
+        return ancestry.toString();
     }
 
     /**
