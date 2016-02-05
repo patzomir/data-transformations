@@ -58,6 +58,21 @@ public class Place implements Comparable<Place>, Serializable {
     }
 
     /**
+     * Test if this place is a descendant of some other place.
+     * @param other The other place.
+     * @return True if this place is descendant of the other place; false otherwise.
+     */
+    public boolean isDescendantOf(Place other) {
+        Place pointer = this;
+
+        while ((pointer = pointer.parent) != null) {
+            if (pointer.equals(other)) return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Get the ancestors of this place.
      * @return The ancestors in order from closest to furthest.
      */
