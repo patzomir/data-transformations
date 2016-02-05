@@ -1,5 +1,9 @@
 package com.ontotext.ehri.georecon;
 
+import com.ontotext.ehri.georecon.place.PlaceIndex;
+
+import java.io.*;
+
 /**
  * Helper methods.
  */
@@ -37,5 +41,47 @@ public class Tools {
      */
     private static double rad2deg(double rad) {
         return (rad * 180 / Math.PI);
+    }
+
+    /**
+     * Serialize a place index to file.
+     * @param index The place index.
+     * @param file The file.
+     * @throws IOException
+     */
+    public static void serializeIndex(PlaceIndex index, File file) throws IOException {
+        FileOutputStream fileOutput = new FileOutputStream(file);
+        ObjectOutputStream objectOutput = new ObjectOutputStream(fileOutput);
+
+        try {
+            objectOutput.writeObject(index);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            objectOutput.close();
+            fileOutput.close();
+        }
+    }
+
+    /**
+     * Deserialize a place index from file.
+     * @param file The file.
+     * @return The place index.
+     * @throws IOException
+     */
+    public static PlaceIndex deserializeIndex(File file) throws IOException {
+        FileInputStream fileInput = new FileInputStream(file);
+        ObjectInputStream objectInput = new ObjectInputStream(fileInput);
+
+        try {
+            PlaceIndex placeIndex = (PlaceIndex) objectInput.readObject();
+            return placeIndex;
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } finally {
+            objectInput.close();
+            fileInput.close();
+            return null;
+        }
     }
 }

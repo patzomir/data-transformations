@@ -16,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,14 +72,12 @@ public class IndexBuilder {
 
             LOGGER.info("serializing index...");
             start = System.currentTimeMillis();
-            serializeIndex(index, file);
+            Tools.serializeIndex(index, file);
             time = System.currentTimeMillis() - start;
             LOGGER.info("index serialized in " + time + " ms");
         } catch (RepositoryException e) {
             LOGGER.error("exception while building index", e);
         } catch (SailException e) {
-            LOGGER.error("exception while building index", e);
-        } catch (MalformedURLException e) {
             LOGGER.error("exception while building index", e);
         } catch (IOException e) {
             LOGGER.error("exception while serializing index", e);
@@ -93,9 +90,8 @@ public class IndexBuilder {
      * @return The built index.
      * @throws RepositoryException
      * @throws SailException
-     * @throws MalformedURLException
      */
-    private static PlaceIndex buildIndex(File repo) throws RepositoryException, SailException, MalformedURLException {
+    private static PlaceIndex buildIndex(File repo) throws RepositoryException, SailException {
         PlaceIndex index = new PlaceIndex();
 
         // start repository
@@ -175,8 +171,9 @@ public class IndexBuilder {
                     resultNames.close();
                 }
 
-                // log some debug information
+                // log some information
                 LOGGER.debug("added \"" + name.stringValue() + "\"\n" + child.ancestry());
+                if (child.getType() == PlaceType.PCL) LOGGER.info("entering \"" + name.stringValue() + "\"");
 
                 // bind the parent variable to this child and add its children
                 queryChildren.setBinding("parent", place);
@@ -210,15 +207,18 @@ public class IndexBuilder {
             return null;
         }
 
-        // parse information about the place
         int geoID = Integer.parseInt(idMatcher.group(1));
+
         double latitude = Double.parseDouble(latitudeValue.stringValue());
         double longitude = Double.parseDouble(longitudeValue.stringValue());
+
         long population = 0;
         if (populationValue != null) population = Long.parseLong(populationValue.stringValue());
-        PlaceType type = classifyPlace(featureValue.stringValue());
 
-        // build the place and return it
+        // only build places with relevant types
+        PlaceType type = classifyPlace(featureValue.stringValue());
+        if (type == null) return null;
+
         Place place = new Place(geoID, latitude, longitude, population, type, parent);
         return place;
     }
@@ -229,51 +229,10 @@ public class IndexBuilder {
      * @return The corresponding place type.
      */
     private static PlaceType classifyPlace(String feature) {
-        if (feature.startsWith("A.ADM")) return PlaceType.ADM;
-        if (feature.startsWith("A.PCL")) return PlaceType.PCL;
-        if (feature.startsWith("P.PPL")) return PlaceType.PPL;
+        if (feature.startsWith("http://www.geonames.org/ontology#A.ADM")) return PlaceType.ADM;
+        if (feature.startsWith("http://www.geonames.org/ontology#A.PCL")) return PlaceType.PCL;
+        if (feature.startsWith("http://www.geonames.org/ontology#P.PPL")) return PlaceType.PPL;
+        // TODO: add all categories that are relevant for reconciliation; return null unless relevant
         return PlaceType.OTHER;
-    }
-
-    /**
-     * Serialize a place index to file.
-     * @param index The place index.
-     * @param file The file.
-     * @throws IOException
-     */
-    public static void serializeIndex(PlaceIndex index, File file) throws IOException {
-        FileOutputStream fileOutput = new FileOutputStream(file);
-        ObjectOutputStream objectOutput = new ObjectOutputStream(fileOutput);
-
-        try {
-            objectOutput.writeObject(index);
-        } catch (IOException e) {
-            LOGGER.error("exception while serializing index to: " + file.getAbsolutePath(), e);
-        } finally {
-            objectOutput.close();
-            fileOutput.close();
-        }
-    }
-
-    /**
-     * Deserialize a place index from file.
-     * @param file The file.
-     * @return The place index.
-     * @throws IOException
-     */
-    public static PlaceIndex deserializeIndex(File file) throws IOException {
-        FileInputStream fileInput = new FileInputStream(file);
-        ObjectInputStream objectInput = new ObjectInputStream(fileInput);
-
-        try {
-            PlaceIndex placeIndex = (PlaceIndex) objectInput.readObject();
-            return placeIndex;
-        } catch (ClassNotFoundException e) {
-            LOGGER.error("exception while deserializing index from: " + file.getAbsolutePath(), e);
-        } finally {
-            objectInput.close();
-            fileInput.close();
-            return null;
-        }
     }
 }

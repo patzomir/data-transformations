@@ -72,7 +72,11 @@ public class Place implements Comparable<Place>, Serializable {
         return ancestors;
     }
 
-    public String ancestry() throws MalformedURLException {
+    /**
+     * Return a string representing the ancestry of this place.
+     * @return A string representing the ancestry of this place.
+     */
+    public String ancestry() {
         StringBuilder ancestry = new StringBuilder();
         StringBuilder indent = new StringBuilder();
         Deque<Place> ancestors = getAncestors();
@@ -176,9 +180,14 @@ public class Place implements Comparable<Place>, Serializable {
     /**
      * Construct the GeoNames URL of this place.
      * @return The GeoNames URL of this place.
-     * @throws MalformedURLException
      */
-    public URL toURL() throws MalformedURLException {
-        return new URL("http://sws.geonames.org/" + geoID + "/");
+    public URL toURL() {
+
+        try {
+            return new URL("http://sws.geonames.org/" + geoID + "/");
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null; // not going to happen
+        }
     }
 }
