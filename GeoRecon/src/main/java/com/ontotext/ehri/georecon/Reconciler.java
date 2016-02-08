@@ -6,9 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class Reconciler {
@@ -102,17 +100,36 @@ public class Reconciler {
 
         if (places.size() == 0) return null;
 
-        Iterator<Place> iterator = places.iterator();
-        Place chosen = iterator.next();
+        Deque<Set<Place>> mergedLine = new LinkedList<Set<Place>>();
 
-        while (iterator.hasNext()) {
-            Place next = iterator.next();
+        for (Place place : places) {
+            Deque<Place> ancestors = place.getAncestors();
 
-            if (chosen.isDescendantOf(next)) continue;
-            else if (next.isDescendantOf(chosen)) chosen = next;
-            else chosen = chosen.closestCommonAncestor(next);
+            while (mergedLine.size() < ancestors.size() + 1) {
+                mergedLine.add(new HashSet<Place>());
+            }
+
+            Iterator<Set<Place>> mergedIterator = mergedLine.iterator();
+            Iterator<Place> ancestorIterator = ancestors.descendingIterator();
+
+            while (ancestorIterator.hasNext()) {
+                Place ancestor = ancestorIterator.next();
+                mergedIterator.next().add(ancestor);
+            }
+
+            mergedIterator.next().add(place);
         }
 
+        Place chosen = null;
+        Iterator<Set<Place>> mergedIterator = mergedLine.iterator();
+
+        while (mergedIterator.hasNext()) {
+            Set<Place> mergedPlaces = mergedIterator.next();
+            if (mergedPlaces.size() == 1) chosen = mergedPlaces.iterator().next();
+            else break;
+        }
+
+        if (chosen == null) return null;
         return chosen.toURL().toString();
     }
 }
