@@ -72,16 +72,16 @@ public class Tools {
     public static PlaceIndex deserializeIndex(File file) throws IOException {
         FileInputStream fileInput = new FileInputStream(file);
         ObjectInputStream objectInput = new ObjectInputStream(fileInput);
+        PlaceIndex placeIndex = null;
 
         try {
-            PlaceIndex placeIndex = (PlaceIndex) objectInput.readObject();
-            return placeIndex;
+            placeIndex = (PlaceIndex) objectInput.readObject();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } finally {
             objectInput.close();
             fileInput.close();
-            return null;
+            return placeIndex;
         }
     }
 }

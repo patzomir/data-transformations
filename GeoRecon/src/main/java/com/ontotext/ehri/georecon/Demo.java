@@ -1,5 +1,6 @@
 package com.ontotext.ehri.georecon;
 
+import com.ontotext.ehri.georecon.place.Place;
 import com.ontotext.ehri.georecon.place.PlaceIndex;
 
 import java.io.File;
@@ -34,7 +35,9 @@ public class Demo {
             String input;
 
             while (! (input = scanner.nextLine()).equals(CMD_QUIT)) {
-                System.out.println(index.getOne(input).ancestry());
+                Place result = index.getOne(input);
+                if (result == null) System.out.println("Not found");
+                else System.out.println(result.ancestry());
             }
 
             System.out.println("Bye!");

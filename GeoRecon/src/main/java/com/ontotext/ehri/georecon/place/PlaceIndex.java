@@ -57,10 +57,12 @@ public class PlaceIndex implements Serializable {
     /**
      * Get one place with the given name.
      * @param name The name of the place.
-     * @return The most relevant place with this name.
+     * @return The most relevant place with this name, or null if there are no places with this name.
      */
     public Place getOne(String name) {
-        return get(name).iterator().next();
+        Set<Place> matches = get(name);
+        if (matches == null) return null;
+        return matches.iterator().next();
     }
 
     /**

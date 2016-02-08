@@ -88,6 +88,40 @@ public class Place implements Comparable<Place>, Serializable {
     }
 
     /**
+     * Find the closest common ancestor between this place and some other place.
+     * @param other The other place.
+     * @return The closest common ancestor.
+     */
+    public Place closestCommonAncestor(Place other) {
+        Deque<Place> ancestors = getAncestors();
+        Iterator<Place> iterator = ancestors.descendingIterator();
+        Deque<Place> otherAncestors = other.getAncestors();
+        Iterator<Place> otherIterator = otherAncestors.descendingIterator();
+        Place closestCommonAncestor = null;
+
+        // iterate through both ancestral lines
+        while (iterator.hasNext() && otherIterator.hasNext()) {
+            Place ancestor = iterator.next();
+            Place otherAncestor = otherIterator.next();
+
+            // update closest common ancestor and return it if the ancestral lines diverge
+            if (ancestor.equals(otherAncestor)) closestCommonAncestor = ancestor;
+            else return closestCommonAncestor;
+        }
+
+        // check if one of the places is an ancestor of the other place
+        if (iterator.hasNext()) {
+            Place ancestor = iterator.next();
+            if (ancestor.equals(other)) closestCommonAncestor = ancestor;
+        } else if (otherIterator.hasNext()) {
+            Place otherAncestor = otherIterator.next();
+            if (equals(otherAncestor)) closestCommonAncestor = this;
+        }
+
+        return closestCommonAncestor;
+    }
+
+    /**
      * Return a string representing the ancestry of this place.
      * @return A string representing the ancestry of this place.
      */
