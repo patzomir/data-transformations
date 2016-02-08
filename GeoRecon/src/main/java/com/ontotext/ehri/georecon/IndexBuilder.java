@@ -173,7 +173,7 @@ public class IndexBuilder {
 
                 // log some information
                 LOGGER.debug("added \"" + name.stringValue() + "\"\n" + child.ancestry());
-                if (child.getType() == PlaceType.PCL) LOGGER.info("entering \"" + name.stringValue() + "\"");
+                if (child.getType() == PlaceType.A_PCL) LOGGER.info("entering \"" + name.stringValue() + "\"");
 
                 // bind the parent variable to this child and add its children
                 queryChildren.setBinding("parent", place);
@@ -229,10 +229,29 @@ public class IndexBuilder {
      * @return The corresponding place type.
      */
     private static PlaceType classifyPlace(String feature) {
-        if (feature.startsWith("http://www.geonames.org/ontology#A.ADM")) return PlaceType.ADM;
-        if (feature.startsWith("http://www.geonames.org/ontology#A.PCL")) return PlaceType.PCL;
-        if (feature.startsWith("http://www.geonames.org/ontology#P.PPL")) return PlaceType.PPL;
-        // TODO: add all categories that are relevant for reconciliation; return null unless relevant
-        return PlaceType.OTHER;
+
+        // specific feature codes
+        if (feature.startsWith("http://www.geonames.org/ontology#A.PCL")) return PlaceType.A_PCL;
+        if (feature.startsWith("http://www.geonames.org/ontology#S.ADMF")) return PlaceType.S_ADMF;
+        if (feature.startsWith("http://www.geonames.org/ontology#S.BDG")) return PlaceType.S_BDG;
+        if (feature.startsWith("http://www.geonames.org/ontology#S.CH")) return PlaceType.S_CH;
+        if (feature.startsWith("http://www.geonames.org/ontology#S.CMTY")) return PlaceType.S_CMTY;
+        if (feature.startsWith("http://www.geonames.org/ontology#S.HSTS")) return PlaceType.S_HSTS;
+        if (feature.startsWith("http://www.geonames.org/ontology#S.MNMT")) return PlaceType.S_MNMT;
+        if (feature.startsWith("http://www.geonames.org/ontology#S.MUS")) return PlaceType.S_MUS;
+        if (feature.startsWith("http://www.geonames.org/ontology#S.RUIN")) return PlaceType.S_RUIN;
+
+        // classes of feature codes
+        if (feature.startsWith("http://www.geonames.org/ontology#A.")) return PlaceType.A;
+        if (feature.startsWith("http://www.geonames.org/ontology#H.")) return PlaceType.H;
+        if (feature.startsWith("http://www.geonames.org/ontology#L.")) return PlaceType.L;
+        if (feature.startsWith("http://www.geonames.org/ontology#P.")) return PlaceType.P;
+        if (feature.startsWith("http://www.geonames.org/ontology#R.")) return PlaceType.R;
+        if (feature.startsWith("http://www.geonames.org/ontology#T.")) return PlaceType.T;
+        if (feature.startsWith("http://www.geonames.org/ontology#U.")) return PlaceType.U;
+        if (feature.startsWith("http://www.geonames.org/ontology#V.")) return PlaceType.V;
+
+        // ignore irrelevant or missing feature codes
+        return null;
     }
 }

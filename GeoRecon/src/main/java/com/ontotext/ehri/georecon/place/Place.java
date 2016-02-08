@@ -138,17 +138,9 @@ public class Place implements Comparable<Place>, Serializable {
         if (this == o) return 0;
         if (geoID == o.geoID) return 0;
 
-        // prefer countries
-        if (type == PlaceType.PCL && o.type != PlaceType.PCL) return -1;
-        else if (type != PlaceType.PCL && o.type == PlaceType.PCL) return 1;
-
-        // prefer populated places
-        if (type == PlaceType.PPL && o.type != PlaceType.PPL) return -1;
-        else if (type != PlaceType.PPL && o.type == PlaceType.PPL) return 1;
-
-        // prefer administrative divisions
-        if (type == PlaceType.ADM && o.type != PlaceType.ADM) return -1;
-        else if (type != PlaceType.ADM && o.type == PlaceType.ADM) return 1;
+        // compare types
+        int compareType = type.compareTo(o.type);
+        if (compareType != 0) return compareType;
 
         // prefer more populated places
         if (population > o.population) return -1;
