@@ -1,10 +1,14 @@
 package com.ontotext.ehri.georecon;
 
+import com.ontotext.ehri.georecon.place.Place;
 import com.ontotext.ehri.georecon.place.PlaceIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class Reconciler {
@@ -65,8 +69,10 @@ public class Reconciler {
 
                 while ((line = bufferedReader.readLine()) != null) {
                     fields = COLUMN_SPLITTER.split(line);
-                    String[] atoms = LIST_SPLITTER.split(fields[columnIndex]);
-                    bufferedWriter.write(reconcile(atoms) + COLUMN_SEPARATOR + line);
+                    String result = reconcile(index, fields[columnIndex]);
+
+                    if (result == null) result = "";
+                    bufferedWriter.write(result + COLUMN_SEPARATOR + line);
                 }
 
             } catch (IOException e) {
@@ -85,7 +91,28 @@ public class Reconciler {
         }
     }
 
-    private static String reconcile(String[] atoms) {
-        return "TODO";
+    public static String reconcile(PlaceIndex index, String accessPoint) {
+        Set<Place> places = new HashSet<Place>();
+        String[] atoms = LIST_SPLITTER.split(accessPoint);
+
+        for (String atom : atoms) {
+            Place place = index.getOne(atom);
+            if (place != null) places.add(place);
+        }
+
+        if (places.size() == 0) return null;
+
+        Iterator<Place> iterator = places.iterator();
+        Place chosen = iterator.next();
+
+        while (iterator.hasNext()) {
+            Place next = iterator.next();
+
+            if (chosen.isDescendantOf(next)) continue;
+            else if (next.isDescendantOf(chosen)) chosen = next;
+            else chosen = chosen.closestCommonAncestor(next);
+        }
+
+        return chosen.toURL().toString();
     }
 }

@@ -7,6 +7,6 @@ import java.io.Serializable;
  */
 public enum PlaceType implements Serializable {
     A_PCL, P, A, // country < city < division
-    S_ADMF, S_BDG, S_CH, S_CMTY, S_HSTS, S_MNMT, S_MUS, S_RUIN, // relevant structures
+    S_ADMF, S_BDG, S_CH, S_CMTY, S_HSTS, S_MNMT, S_MUS, S_PRN, S_RUIN, // relevant structures
     H, L, R, T, U, V // various landmarks
 }

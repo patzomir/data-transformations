@@ -239,6 +239,7 @@ public class IndexBuilder {
         if (feature.startsWith("http://www.geonames.org/ontology#S.HSTS")) return PlaceType.S_HSTS;
         if (feature.startsWith("http://www.geonames.org/ontology#S.MNMT")) return PlaceType.S_MNMT;
         if (feature.startsWith("http://www.geonames.org/ontology#S.MUS")) return PlaceType.S_MUS;
+        if (feature.startsWith("http://www.geonames.org/ontology#S.PRN")) return PlaceType.S_PRN;
         if (feature.startsWith("http://www.geonames.org/ontology#S.RUIN")) return PlaceType.S_RUIN;
 
         // classes of feature codes
