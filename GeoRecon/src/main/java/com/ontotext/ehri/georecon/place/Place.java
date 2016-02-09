@@ -14,6 +14,16 @@ import java.util.LinkedList;
  */
 public class Place implements Comparable<Place>, Serializable {
 
+    // the root of the place tree: http://www.geonames.org/6295630/ (Earth)
+    public static final Place ROOT = new Place(6295630, 0, 0, 6814400000L, PlaceType.L, null);
+
+    // prefix and suffix to add to the GeoNames ID when constructing the GeoNames URL
+    public static final String URL_PREFIX = "http://sws.geonames.org/";
+    public static final String URL_SUFFIX = "/";
+
+    // string which separates places in a lineage representation
+    private static final String LINEAGE_SEPARATOR = " => ";
+
     // coordinates of reference point: http://sws.geonames.org/2950159/ (Berlin)
     private static final double REF_POINT_LAT = 52.52437;
     private static final double REF_POINT_LON = 13.41053;
@@ -58,7 +68,7 @@ public class Place implements Comparable<Place>, Serializable {
     }
 
     /**
-     * Test if this place is a descendant of some other place.
+     * Test if this place is a descendant of some other place. A place cannot be a descendant of itself.
      * @param other The other place.
      * @return True if this place is descendant of the other place; false otherwise.
      */
@@ -73,75 +83,143 @@ public class Place implements Comparable<Place>, Serializable {
     }
 
     /**
-     * Get the ancestors of this place.
-     * @return The ancestors in order from closest to furthest.
+     * Test if this place is a sibling of some other place.
+     * @param other The other place.
+     * @return True if this place is sibling of the other place; false otherwise.
      */
-    public Deque<Place> getAncestors() {
-        Deque<Place> ancestors = new LinkedList<Place>();
+    public boolean isSiblingOf(Place other) {
+        Place myParent = parent;
+        Place otherParent = other.parent;
+
+        if (myParent != null && otherParent != null && myParent.equals(otherParent)) return true;
+        return false;
+    }
+
+    /**
+     * Get the lineage of this place. This is the sequence which starts with this place and includes all its ancestors
+     * in order from closest to furthest.
+     * @return The lineage of this place.
+     */
+    public Deque<Place> lineage() {
+        Deque<Place> lineage = new LinkedList<Place>();
+        Place pointer = this;
+        lineage.add(pointer);
+
+        // add next ancestor till you hit the root
+        while ((pointer = pointer.parent) != null) {
+            lineage.add(pointer);
+        }
+
+        return lineage;
+    }
+
+    /**
+     * Get the closest common place between this and some other place. This is the smallest place which includes both
+     * this and the other place.
+     * @param other The other place.
+     * @return The closest common place or null if the two places have no common ancestor (should not happen).
+     */
+    public Place closestCommon(Place other) {
+        Iterator<Place> myLineage = lineage().descendingIterator();
+        Iterator<Place> otherLineage = other.lineage().descendingIterator();
+        Place closestCommon = null;
+
+        // iterate through both lineages
+        while (myLineage.hasNext() && otherLineage.hasNext()) {
+            Place myAncestor = myLineage.next();
+            Place otherAncestor = otherLineage.next();
+
+            // update closest common till lineages diverge
+            if (myAncestor.equals(otherAncestor)) closestCommon = myAncestor;
+            else break;
+        }
+
+        return closestCommon;
+    }
+
+    /**
+     * Calculate the distance in the tree between this place and some other place. This is the number of nodes you need
+     * to traverse to get to the other place if you follow the shortest path.
+     * @param other The other place.
+     * @return A positive integer representing the distance in the tree between this and the other place,
+     * zero if they are the same place, or negative one if they are not connected (should not happen).
+     */
+    public int treeDistance(Place other) {
+        Iterator<Place> myLineage = lineage().descendingIterator();
+        Iterator<Place> otherLineage = other.lineage().descendingIterator();
+        Place closestCommon = null;
+
+        // iterate through both lineages
+        while (myLineage.hasNext() && otherLineage.hasNext()) {
+            Place myAncestor = myLineage.next();
+            Place otherAncestor = otherLineage.next();
+
+            // update closest common till lineages diverge
+            if (myAncestor.equals(otherAncestor)) closestCommon = myAncestor;
+            else break;
+        }
+
+        if (closestCommon == null) return -1;
+        int treeDistance = 0;
+
+        while (myLineage.hasNext()) {
+            myLineage.next();
+            treeDistance++;
+        }
+
+        while (otherLineage.hasNext()) {
+            otherLineage.next();
+            treeDistance++;
+        }
+
+        return treeDistance;
+    }
+
+    /**
+     * Calculate the number of ancestors that this place has.
+     * @return The number of ancestors.
+     */
+    public int numAncestors() {
+        int numAncestors = 0;
         Place pointer = this;
 
         while ((pointer = pointer.parent) != null) {
-            ancestors.add(pointer);
+            numAncestors++;
         }
 
-        return ancestors;
+        return numAncestors;
     }
 
     /**
-     * Find the closest common ancestor between this place and some other place.
-     * @param other The other place.
-     * @return The closest common ancestor.
+     * Get a string representation of the lineage of this place.
+     * @return A string representing the lineage of this place.
      */
-    public Place closestCommonAncestor(Place other) {
-        Deque<Place> ancestors = getAncestors();
-        Iterator<Place> iterator = ancestors.descendingIterator();
-        Deque<Place> otherAncestors = other.getAncestors();
-        Iterator<Place> otherIterator = otherAncestors.descendingIterator();
-        Place closestCommonAncestor = null;
+    public String lineageString() {
+        StringBuilder lineageString = new StringBuilder();
+        Iterator<Place> lineage = lineage().descendingIterator();
 
-        // iterate through both ancestral lines
-        while (iterator.hasNext() && otherIterator.hasNext()) {
-            Place ancestor = iterator.next();
-            Place otherAncestor = otherIterator.next();
-
-            // update closest common ancestor and return it if the ancestral lines diverge
-            if (ancestor.equals(otherAncestor)) closestCommonAncestor = ancestor;
-            else return closestCommonAncestor;
+        // append separator and next place in lineage
+        while (lineage.hasNext()) {
+            lineageString.append(LINEAGE_SEPARATOR);
+            lineageString.append(lineage.next().toString());
         }
 
-        // check if one of the places is an ancestor of the other place
-        if (iterator.hasNext()) {
-            Place ancestor = iterator.next();
-            if (ancestor.equals(other)) closestCommonAncestor = ancestor;
-        } else if (otherIterator.hasNext()) {
-            Place otherAncestor = otherIterator.next();
-            if (equals(otherAncestor)) closestCommonAncestor = this;
-        }
-
-        return closestCommonAncestor;
+        // return the string without the first separator
+        return lineageString.substring(LINEAGE_SEPARATOR.length());
     }
 
     /**
-     * Return a string representing the ancestry of this place.
-     * @return A string representing the ancestry of this place.
+     * Construct the GeoNames URL of this place.
+     * @return The GeoNames URL of this place.
      */
-    public String ancestry() {
-        StringBuilder ancestry = new StringBuilder();
-        StringBuilder indent = new StringBuilder();
-        Deque<Place> ancestors = getAncestors();
-        Iterator<Place> ancestorIterator = ancestors.descendingIterator();
+    public URL toURL() {
 
-        while (ancestorIterator.hasNext()) {
-            Place ancestor = ancestorIterator.next();
-            ancestry.append(indent.toString());
-            ancestry.append(ancestor.toURL().toString());
-            ancestry.append("\n");
-            indent.append("  ");
+        try {
+            return new URL(URL_PREFIX + geoID + URL_SUFFIX);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return null; // not going to happen
         }
-
-        ancestry.append(indent.toString());
-        ancestry.append(toURL().toString());
-        return ancestry.toString();
     }
 
     /**
@@ -207,28 +285,6 @@ public class Place implements Comparable<Place>, Serializable {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder("Place{");
-        sb.append("geoID=").append(geoID);
-        sb.append(", latitude=").append(latitude);
-        sb.append(", longitude=").append(longitude);
-        sb.append(", population=").append(population);
-        sb.append(", type=").append(type);
-        sb.append(", parent=").append(parent);
-        sb.append('}');
-        return sb.toString();
-    }
-
-    /**
-     * Construct the GeoNames URL of this place.
-     * @return The GeoNames URL of this place.
-     */
-    public URL toURL() {
-
-        try {
-            return new URL("http://sws.geonames.org/" + geoID + "/");
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            return null; // not going to happen
-        }
+        return toURL().toString();
     }
 }

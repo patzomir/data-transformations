@@ -7,16 +7,19 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Demonstrate the GeoNames reconciler.
  */
 public class Demo {
+
+    // quit command
     private static final String CMD_QUIT = "/q";
 
-    private static final Pattern LIST_SPLITTER = Pattern.compile(",");
-
+    /**
+     * Run the program.
+     * @param args Command-line arguments: <index file>.
+     */
     public static void main(String[] args) {
 
         // check arguments
@@ -28,35 +31,40 @@ public class Demo {
         File file = new File(args[0]);
 
         try {
-            System.out.println("Loading index...");
+            System.out.println("loading index...");
             long start = System.currentTimeMillis();
             PlaceIndex index = Tools.deserializeIndex(file);
             long time = System.currentTimeMillis() - start;
-            System.out.println("Index loaded in " + time + " ms!");
+            System.out.println("index loaded in " + time + " ms");
 
-            System.out.println("Enter places or \"" + CMD_QUIT + "\" to quit.");
+            // inform user
+            System.out.println("enter lists of places or \"" + CMD_QUIT + "\" to quit");
+            System.out.println("use \"" + Reconciler.LIST_SEPARATOR + "\" to separate items in lists");
             Scanner scanner = new Scanner(System.in);
             String input;
 
-            while (! (input = scanner.nextLine()).equals(CMD_QUIT)) {
-                String result = Reconciler.reconcile(index, input);
+            // reconcile user input
+            while (! (input = scanner.nextLine().trim()).equals(CMD_QUIT)) {
+                String[] atoms = Reconciler.LIST_SPLITTER.split(input);
+                Place recon = Reconciler.reconcile(index, atoms);
 
-                if (result == null) System.out.println("not found");
-                else System.out.println(result);
+                // print result from reconciliation if any
+                if (recon == null) System.out.println("not found");
+                else System.out.println(recon.toString());
 
-                String[] atoms = LIST_SPLITTER.split(input);
-
+                // for each atom, get all matches in order of relevance
                 for (String atom : atoms) {
-                    Set<Place> hits = index.get(atom);
-                    if (hits == null) continue;
+                    Set<Place> matches = index.get(atom);
+                    if (matches == null) continue;
 
-                    for (Place hit : hits) {
-                        System.out.println(atom + " => " + hit.toURL().toString());
+                    // print some additional information
+                    for (Place match : matches) {
+                        System.out.println("\"" + atom + "\": " + match.lineageString());
                     }
                 }
             }
 
-            System.out.println("Bye!");
+            System.out.println("bye");
 
         } catch (IOException e) {
             e.printStackTrace();

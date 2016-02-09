@@ -45,9 +45,9 @@ public class PlaceIndex implements Serializable {
     }
 
     /**
-     * Get a set of places with the given name.
+     * Get the set of places with the given name.
      * @param name The name of the places.
-     * @return The set of places with this name.
+     * @return The set of places with this name, or null if there are no places with this name.
      */
     public Set<Place> get(String name) {
         name = normalizeName(name);

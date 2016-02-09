@@ -66,7 +66,7 @@ public class Tools {
     /**
      * Deserialize a place index from file.
      * @param file The file.
-     * @return The place index.
+     * @return The place index, or null if deserialization failed.
      * @throws IOException
      */
     public static PlaceIndex deserializeIndex(File file) throws IOException {
@@ -76,7 +76,7 @@ public class Tools {
 
         try {
             placeIndex = (PlaceIndex) objectInput.readObject();
-        } catch (ClassNotFoundException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         } finally {
             objectInput.close();

@@ -16,8 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Build place index from Sesame repository and serialize it to disk.
@@ -25,8 +23,11 @@ import java.util.regex.Pattern;
 public class IndexBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexBuilder.class);
 
-    // regular expression for extracting GeoNames ID from GeoNames URL
-    private static final Pattern EXTRACT_GEOID = Pattern.compile("sws\\.geonames\\.org/(\\d+)");
+    // prefix added before GeoNames feature codes
+    private static String FEATURE_PREFIX = "http://www.geonames.org/ontology#";
+
+    // feature code of places that are required to have population
+    private static String FEATURE_POPULATED = "P.PPL";
 
     // query the children of a place (variable parent must be bound)
     private static final String QUERY_CHILDREN = "PREFIX gn: <http://www.geonames.org/ontology#>\n" +
@@ -100,25 +101,22 @@ public class IndexBuilder {
         repository.initialize();
         RepositoryConnection connection = repository.getConnection();
 
-        // create the Earth
-        Place earth = new Place(6295630, 0, 0, 6814400000L, null, null);
+        // create the root place
         ValueFactory factory = repository.getValueFactory();
-        Value earthValue = factory.createURI(earth.toURL().toString());
+        Value root = factory.createURI(Place.ROOT.toURL().toString());
 
         try {
+
+            // prepare SPARQL queries
             TupleQuery queryChildren = connection.prepareTupleQuery(QueryLanguage.SPARQL, QUERY_CHILDREN);
             TupleQuery queryNames = connection.prepareTupleQuery(QueryLanguage.SPARQL, QUERY_NAMES);
 
-            // add descendants of the Earth
-            queryChildren.setBinding("parent", earthValue);
-            addChildren(index, earth, queryChildren, queryNames);
+            // add children recursively, starting from the root
+            queryChildren.setBinding("parent", root);
+            addChildren(index, Place.ROOT, queryChildren, queryNames);
 
-        } catch (MalformedQueryException e) {
-            LOGGER.error("exception while adding places", e);
         } catch (RepositoryException e) {
-            LOGGER.error("exception while adding places", e);
-        } catch (QueryEvaluationException e) {
-            LOGGER.error("exception while adding places", e);
+            LOGGER.error("exception while building index", e);
         } finally {
             connection.close();
             repository.shutDown();
@@ -165,23 +163,22 @@ public class IndexBuilder {
                         index.add(child, altName.stringValue());
                     }
 
-                } catch (Exception e) {
-                    LOGGER.error("exception while adding alternative names of " + child.getGeoID(), e);
+                } catch (QueryEvaluationException e) {
+                    LOGGER.error("exception while querying alternative names of place: " + child.toString(), e);
                 } finally {
                     resultNames.close();
                 }
 
                 // log some information
-                LOGGER.debug("added \"" + name.stringValue() + "\"\n" + child.ancestry());
-                if (child.getType() == PlaceType.A_PCL) LOGGER.info("entering \"" + name.stringValue() + "\"");
+                if (child.getType() == PlaceType.A_PCL) LOGGER.info("entering new country: " + child.lineageString());
 
                 // bind the parent variable to this child and add its children
                 queryChildren.setBinding("parent", place);
                 addChildren(index, child, queryChildren, queryNames);
             }
 
-        } catch (Exception e) {
-            LOGGER.error("exception while adding children of " + parent.getGeoID(), e);
+        } catch (QueryEvaluationException e) {
+            LOGGER.error("exception while querying children of place: " + parent.toString(), e);
         } finally {
             resultChildren.close();
         }
@@ -191,7 +188,7 @@ public class IndexBuilder {
      * Build a place with the given parent place and variable bindings.
      * @param parent The parent place.
      * @param bindings The variable bindings from the children query.
-     * @return A place with the given parent build from the given variable bindings, or null if something bad happens.
+     * @return A place with the given parent built from the given variable bindings, or null if something bad happens.
      */
     private static Place buildPlace(Place parent, BindingSet bindings) {
         Value placeValue = bindings.getValue("place");
@@ -200,27 +197,50 @@ public class IndexBuilder {
         Value longitudeValue = bindings.getValue("longitude");
         Value populationValue = bindings.getValue("population");
 
-        // cannot build place without GeoID
-        Matcher idMatcher = EXTRACT_GEOID.matcher(placeValue.stringValue());
-        if (! idMatcher.find()) {
-            LOGGER.warn("cannot extract GeoID from URL: " + placeValue.stringValue());
+        // extract GeoNames ID from GeoNames URL
+        int geoID;
+        try {
+            String geoURL = placeValue.stringValue();
+            int startPos = Place.URL_PREFIX.length();
+            int endPos = geoURL.length() - Place.URL_SUFFIX.length();
+            geoID = Integer.parseInt(geoURL.substring(startPos, endPos));
+        } catch (NumberFormatException e) {
+            LOGGER.warn("cannot extract ID from URL: " + placeValue.stringValue(), e);
             return null;
         }
 
-        int geoID = Integer.parseInt(idMatcher.group(1));
+        // parse coordinates
+        double latitude = 0;
+        double longitude = 0;
+        try {
+            latitude = Double.parseDouble(latitudeValue.stringValue());
+            longitude = Double.parseDouble(longitudeValue.stringValue());
+        } catch (NumberFormatException e) {
+            LOGGER.warn("cannot parse coordinates", e);
+        }
 
-        double latitude = Double.parseDouble(latitudeValue.stringValue());
-        double longitude = Double.parseDouble(longitudeValue.stringValue());
-
+        // parse population if available
         long population = 0;
-        if (populationValue != null) population = Long.parseLong(populationValue.stringValue());
+        if (populationValue != null) {
+            try {
+                population = Long.parseLong(populationValue.stringValue());
+            } catch (NumberFormatException e) {
+                LOGGER.warn("cannot parse population", e);
+            }
+        }
 
-        // only build places with relevant types
-        PlaceType type = classifyPlace(featureValue.stringValue());
+        // extract feature and classify place
+        PlaceType type = null;
+        if (featureValue.stringValue().startsWith(FEATURE_PREFIX)) {
+            String feature = featureValue.stringValue().substring(FEATURE_PREFIX.length());
+            if (feature.equals(FEATURE_POPULATED) && population == 0) return null; // filter out some garbage data
+            type = classifyPlace(feature);
+        } else {
+            LOGGER.warn("cannot extract feature from URL: " + featureValue.stringValue());
+        }
         if (type == null) return null;
 
-        Place place = new Place(geoID, latitude, longitude, population, type, parent);
-        return place;
+        return new Place(geoID, latitude, longitude, population, type, parent);
     }
 
     /**
@@ -231,28 +251,28 @@ public class IndexBuilder {
     private static PlaceType classifyPlace(String feature) {
 
         // specific feature codes
-        if (feature.startsWith("http://www.geonames.org/ontology#A.PCL")) return PlaceType.A_PCL;
-        if (feature.startsWith("http://www.geonames.org/ontology#S.ADMF")) return PlaceType.S_ADMF;
-        if (feature.startsWith("http://www.geonames.org/ontology#S.BDG")) return PlaceType.S_BDG;
-        if (feature.startsWith("http://www.geonames.org/ontology#S.CH")) return PlaceType.S_CH;
-        if (feature.startsWith("http://www.geonames.org/ontology#S.CMTY")) return PlaceType.S_CMTY;
-        if (feature.startsWith("http://www.geonames.org/ontology#S.HSTS")) return PlaceType.S_HSTS;
-        if (feature.startsWith("http://www.geonames.org/ontology#S.MNMT")) return PlaceType.S_MNMT;
-        if (feature.startsWith("http://www.geonames.org/ontology#S.MUS")) return PlaceType.S_MUS;
-        if (feature.startsWith("http://www.geonames.org/ontology#S.PRN")) return PlaceType.S_PRN;
-        if (feature.startsWith("http://www.geonames.org/ontology#S.RUIN")) return PlaceType.S_RUIN;
+        if (feature.startsWith("A.PCL")) return PlaceType.A_PCL;
+        if (feature.startsWith("S.ADMF")) return PlaceType.S_ADMF;
+        if (feature.startsWith("S.BDG")) return PlaceType.S_BDG;
+        if (feature.startsWith("S.CH")) return PlaceType.S_CH;
+        if (feature.startsWith("S.CMTY")) return PlaceType.S_CMTY;
+        if (feature.startsWith("S.HSTS")) return PlaceType.S_HSTS;
+        if (feature.startsWith("S.MNMT")) return PlaceType.S_MNMT;
+        if (feature.startsWith("S.MUS")) return PlaceType.S_MUS;
+        if (feature.startsWith("S.PRN")) return PlaceType.S_PRN;
+        if (feature.startsWith("S.RUIN")) return PlaceType.S_RUIN;
 
         // classes of feature codes
-        if (feature.startsWith("http://www.geonames.org/ontology#A.")) return PlaceType.A;
-        if (feature.startsWith("http://www.geonames.org/ontology#H.")) return PlaceType.H;
-        if (feature.startsWith("http://www.geonames.org/ontology#L.")) return PlaceType.L;
-        if (feature.startsWith("http://www.geonames.org/ontology#P.")) return PlaceType.P;
-        if (feature.startsWith("http://www.geonames.org/ontology#R.")) return PlaceType.R;
-        if (feature.startsWith("http://www.geonames.org/ontology#T.")) return PlaceType.T;
-        if (feature.startsWith("http://www.geonames.org/ontology#U.")) return PlaceType.U;
-        if (feature.startsWith("http://www.geonames.org/ontology#V.")) return PlaceType.V;
+        if (feature.startsWith("A.")) return PlaceType.A;
+        if (feature.startsWith("H.")) return PlaceType.H;
+        if (feature.startsWith("L.")) return PlaceType.L;
+        if (feature.startsWith("P.")) return PlaceType.P;
+        if (feature.startsWith("R.")) return PlaceType.R;
+        if (feature.startsWith("T.")) return PlaceType.T;
+        if (feature.startsWith("U.")) return PlaceType.U;
+        if (feature.startsWith("V.")) return PlaceType.V;
 
-        // ignore irrelevant or missing feature codes
+        // ignore irrelevant feature codes
         return null;
     }
 }
