@@ -63,14 +63,14 @@ public class Reconciler {
                     System.exit(1);
                 }
 
-                bufferedWriter.write(outputColumn + COLUMN_SEPARATOR + line);
+                bufferedWriter.write(outputColumn + COLUMN_SEPARATOR + line + "\n");
 
                 while ((line = bufferedReader.readLine()) != null) {
                     fields = COLUMN_SPLITTER.split(line);
                     String result = reconcile(index, fields[columnIndex]);
 
                     if (result == null) result = "";
-                    bufferedWriter.write(result + COLUMN_SEPARATOR + line);
+                    bufferedWriter.write(result + COLUMN_SEPARATOR + line + "\n");
                 }
 
             } catch (IOException e) {

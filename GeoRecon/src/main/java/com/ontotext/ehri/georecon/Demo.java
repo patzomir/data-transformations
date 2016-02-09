@@ -1,16 +1,21 @@
 package com.ontotext.ehri.georecon;
 
+import com.ontotext.ehri.georecon.place.Place;
 import com.ontotext.ehri.georecon.place.PlaceIndex;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Demonstrate the GeoNames reconciler.
  */
 public class Demo {
     private static final String CMD_QUIT = "/q";
+
+    private static final Pattern LIST_SPLITTER = Pattern.compile(",");
 
     public static void main(String[] args) {
 
@@ -38,6 +43,17 @@ public class Demo {
 
                 if (result == null) System.out.println("not found");
                 else System.out.println(result);
+
+                String[] atoms = LIST_SPLITTER.split(input);
+
+                for (String atom : atoms) {
+                    Set<Place> hits = index.get(atom);
+                    if (hits == null) continue;
+
+                    for (Place hit : hits) {
+                        System.out.println(atom + " => " + hit.toURL().toString());
+                    }
+                }
             }
 
             System.out.println("Bye!");
