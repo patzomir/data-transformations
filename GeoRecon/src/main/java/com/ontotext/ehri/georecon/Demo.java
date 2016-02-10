@@ -14,7 +14,7 @@ import java.util.Set;
 public class Demo {
 
     // quit command
-    private static final String CMD_QUIT = "/q";
+    public static final String CMD_QUIT = "/q";
 
     /**
      * Run the program.
