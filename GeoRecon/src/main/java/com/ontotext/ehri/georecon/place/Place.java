@@ -253,9 +253,9 @@ public class Place implements Comparable<Place>, Serializable {
         if (this == o) return 0;
         if (geoID == o.geoID) return 0;
 
-        // compare types
-        int compareType = type.compareTo(o.type);
-        if (compareType != 0) return compareType;
+        // prefer countries
+        if (type == PlaceType.A_PCL && o.type != PlaceType.A_PCL) return -1;
+        else if (type != PlaceType.A_PCL && o.type == PlaceType.A_PCL) return 1;
 
         // prefer more populated places
         if (population > o.population) return -1;

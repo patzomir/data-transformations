@@ -26,8 +26,9 @@ public class IndexBuilder {
     // prefix added before GeoNames feature codes
     private static String FEATURE_PREFIX = "http://www.geonames.org/ontology#";
 
-    // feature code of places that are required to have population
+    // minimum population for populated places
     private static String FEATURE_POPULATED = "P.PPL";
+    private static int MIN_POPULATION = 1000;
 
     // query the children of a place (variable parent must be bound)
     private static final String QUERY_CHILDREN = "PREFIX gn: <http://www.geonames.org/ontology#>\n" +
@@ -233,7 +234,7 @@ public class IndexBuilder {
         PlaceType type = null;
         if (featureValue.stringValue().startsWith(FEATURE_PREFIX)) {
             String feature = featureValue.stringValue().substring(FEATURE_PREFIX.length());
-            if (feature.equals(FEATURE_POPULATED) && population == 0) return null; // filter out some garbage data
+            if (feature.equals(FEATURE_POPULATED) && population < MIN_POPULATION) return null;
             type = classifyPlace(feature);
         } else {
             LOGGER.warn("cannot extract feature from URL: " + featureValue.stringValue());

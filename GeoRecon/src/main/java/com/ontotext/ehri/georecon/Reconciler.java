@@ -25,6 +25,7 @@ public class Reconciler {
 
     // some access-point types in input file
     private static final String CORP_TYPE = "corporateBodyAccess";
+    private static final String CREA_TYPE = "creatorAccess";
     private static final String PERS_TYPE = "personAccess";
 
     /**
@@ -95,7 +96,9 @@ public class Reconciler {
                 // process each line
                 while ((line = bufferedReader.readLine()) != null) {
                     fields = COLUMN_SPLITTER.split(line);
-                    if (fields[typeColumn].equals(CORP_TYPE) || fields[typeColumn].equals(PERS_TYPE)) continue;
+                    if (fields[typeColumn].equals(CORP_TYPE) ||
+                            fields[typeColumn].equals(CREA_TYPE) ||
+                            fields[typeColumn].equals(PERS_TYPE)) continue;
 
                     // split list of atoms and reconcile them
                     String[] atoms = LIST_SPLITTER.split(fields[inputColumn]);
@@ -169,6 +172,7 @@ public class Reconciler {
             else break;
         }
 
+        if (chosenOne != null && chosenOne.equals(Place.ROOT)) return null;
         return chosenOne;
     }
 }
