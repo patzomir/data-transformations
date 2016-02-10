@@ -99,7 +99,7 @@ public class Reconciler {
 
                     // split list of atoms and reconcile them
                     String[] atoms = LIST_SPLITTER.split(fields[inputColumn]);
-                    Place place = reconcile(index, atoms);
+                    Place place = reconcileShallow(index, atoms);
 
                     // write result
                     String result = "";
@@ -124,75 +124,51 @@ public class Reconciler {
     }
 
     /**
-     * Reconcile an array of atomic access points.
-     * @param index The place index to use for lookup.
-     * @param atoms The array of atomic access points.
-     * @return The result of the reconciliation, or null if nothing was found.
+     * Shallow reconciliation considers only the most relevant match for each atom. For places that belong to the same
+     * lineage, it chooses the most specific place (e.g. "Amsterdam" from "Netherlands, Noord-Holland, Amsterdam").
+     * Otherwise, it chooses the closest common ancestor (e.g. "Netherlands" from "Amsterdam, Utrecht, Groningen").
+     * @param index The index to use for lookup.
+     * @param atoms The atomic access points.
+     * @return The chosen place, or null if none of the atoms matches any place.
      */
-    public static Place reconcile(PlaceIndex index, String[] atoms) {
+    public static Place reconcileShallow(PlaceIndex index, String[] atoms) {
         Set<Place> candidates = new HashSet<Place>();
 
-        // for each atom, addpublic the most relevant match to the set of candidates
+        // for each atom, add the most relevant match to the set of candidates
         for (String atom : atoms) {
             Place match = index.getOne(atom);
             if (match != null) candidates.add(match);
         }
 
-        // return null if no matching candidates were found
-        if (candidates.size() == 0) return null;
+        // initialize merged lineage
+        Deque<Set<Place>> mergedLineage = new LinkedList<Set<Place>>();
 
-        // initialize the merged lineage
-        Iterator<Place> candidateIterator = candidates.iterator();
-        Deque<Place> mergedLineage = candidateIterator.next().lineage();
+        // iterate through candidate lineages
+        for (Place candidate : candidates) {
+            Deque<Place> lineage = candidate.lineage();
 
-        // merge lineages of candidates
-        while (candidateIterator.hasNext()) {
-            Place candidate = candidateIterator.next();
-            mergedLineage = mergeLineages(mergedLineage, candidate.lineage());
+            // extend merged lineage if necessary
+            while (mergedLineage.size() < lineage.size()) {
+                mergedLineage.add(new HashSet<Place>());
+            }
+
+            Iterator<Set<Place>> mergedIterator = mergedLineage.iterator();
+
+            // add each place in the candidate lineage to the merged lineage
+            for (Place place : lineage) {
+                mergedIterator.next().add(place);
+            }
         }
 
-        // should not happen
-        if (mergedLineage.size() == 0) {
-            LOGGER.warn("merged lineage is empty");
-            return null;
+        Place chosenOne = null;
+
+        for (Set<Place> places : mergedLineage) {
+
+            // move the chosen one downwards till lineages diverge
+            if (places.size() == 1) chosenOne = places.iterator().next();
+            else break;
         }
 
-        // return the last place in the merged lineage
-        return mergedLineage.descendingIterator().next();
-    }
-
-    /**
-     * Merge two lineages together. If the two lineages diverge, the merged lineage will be the longest common lineage,
-     * starting from the root; otherwise it will be the longer lineage.
-     * @param lineageOne The first lineage to merge.
-     * @param lineageTwo The second lineage to merge.
-     * @return The merged lineage.
-     */
-    private static Deque<Place> mergeLineages(Deque<Place> lineageOne, Deque<Place> lineageTwo) {
-        Deque<Place> mergedLineage = new LinkedList<Place>();
-        Iterator<Place> iteratorOne = lineageOne.descendingIterator();
-        Iterator<Place> iteratorTwo = lineageTwo.descendingIterator();
-
-        // iterate through both lineages
-        while (iteratorOne.hasNext() && iteratorTwo.hasNext()) {
-            Place one = iteratorOne.next();
-            Place two = iteratorTwo.next();
-
-            // return the merged lineage if the two lineages diverge
-            if (one.equals(two)) mergedLineage.add(one);
-            else return mergedLineage;
-        }
-
-        // add any remaining places from the first lineage
-        while (iteratorOne.hasNext()) {
-            mergedLineage.add(iteratorOne.next());
-        }
-
-        // add any remaining places from the second lineage
-        while (iteratorTwo.hasNext()) {
-            mergedLineage.add(iteratorTwo.next());
-        }
-
-        return mergedLineage;
+        return chosenOne;
     }
 }

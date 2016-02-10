@@ -96,8 +96,9 @@ public class Place implements Comparable<Place>, Serializable {
     }
 
     /**
-     * Get the lineage of this place. This is the sequence which starts with this place and includes all its ancestors
-     * in order from closest to furthest.
+     * Get the lineage of this place. This is the sequence which starts with the root of the place tree, includes all
+     * ancestors of this place in order from furthest to closest, and ends with this place. In other words, it is the
+     * shortest path from the root to this place.
      * @return The lineage of this place.
      */
     public Deque<Place> lineage() {
@@ -105,9 +106,9 @@ public class Place implements Comparable<Place>, Serializable {
         Place pointer = this;
         lineage.add(pointer);
 
-        // add next ancestor till you hit the root
+        // prepend next ancestor till you hit the root
         while ((pointer = pointer.parent) != null) {
-            lineage.add(pointer);
+            lineage.addFirst(pointer);
         }
 
         return lineage;
@@ -120,8 +121,8 @@ public class Place implements Comparable<Place>, Serializable {
      * @return The closest common place or null if the two places have no common ancestor (should not happen).
      */
     public Place closestCommon(Place other) {
-        Iterator<Place> myLineage = lineage().descendingIterator();
-        Iterator<Place> otherLineage = other.lineage().descendingIterator();
+        Iterator<Place> myLineage = lineage().iterator();
+        Iterator<Place> otherLineage = other.lineage().iterator();
         Place closestCommon = null;
 
         // iterate through both lineages
@@ -145,11 +146,11 @@ public class Place implements Comparable<Place>, Serializable {
      * zero if they are the same place, or negative one if they are not connected (should not happen).
      */
     public int treeDistance(Place other) {
-        Iterator<Place> myLineage = lineage().descendingIterator();
-        Iterator<Place> otherLineage = other.lineage().descendingIterator();
+        Iterator<Place> myLineage = lineage().iterator();
+        Iterator<Place> otherLineage = other.lineage().iterator();
         Place closestCommon = null;
 
-        // iterate through both lineages
+        // iterate through both lineages till they diverge
         while (myLineage.hasNext() && otherLineage.hasNext()) {
             Place myAncestor = myLineage.next();
             Place otherAncestor = otherLineage.next();
@@ -162,11 +163,13 @@ public class Place implements Comparable<Place>, Serializable {
         if (closestCommon == null) return -1;
         int treeDistance = 0;
 
+        // add the number of diverging nodes
         while (myLineage.hasNext()) {
             myLineage.next();
             treeDistance++;
         }
 
+        // add the number of diverging nodes
         while (otherLineage.hasNext()) {
             otherLineage.next();
             treeDistance++;
@@ -196,7 +199,7 @@ public class Place implements Comparable<Place>, Serializable {
      */
     public String lineageString() {
         StringBuilder lineageString = new StringBuilder();
-        Iterator<Place> lineage = lineage().descendingIterator();
+        Iterator<Place> lineage = lineage().iterator();
 
         // append separator and next place in lineage
         while (lineage.hasNext()) {

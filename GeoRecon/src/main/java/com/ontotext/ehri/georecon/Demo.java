@@ -31,25 +31,25 @@ public class Demo {
         File file = new File(args[0]);
 
         try {
-            System.out.println("loading index...");
+            System.out.println("Loading index...");
             long start = System.currentTimeMillis();
             PlaceIndex index = Tools.deserializeIndex(file);
             long time = System.currentTimeMillis() - start;
-            System.out.println("index loaded in " + time + " ms");
+            System.out.println("Index loaded in " + time + " ms.");
 
             // inform user
-            System.out.println("enter lists of places or \"" + CMD_QUIT + "\" to quit");
-            System.out.println("use \"" + Reconciler.LIST_SEPARATOR + "\" to separate items in lists");
+            System.out.println("Enter lists of places or \"" + CMD_QUIT + "\" to quit.");
+            System.out.println("Use \"" + Reconciler.LIST_SEPARATOR + "\" to separate items in lists.");
             Scanner scanner = new Scanner(System.in);
             String input;
 
             // reconcile user input
             while (! (input = scanner.nextLine().trim()).equals(CMD_QUIT)) {
                 String[] atoms = Reconciler.LIST_SPLITTER.split(input);
-                Place recon = Reconciler.reconcile(index, atoms);
+                Place recon = Reconciler.reconcileShallow(index, atoms);
 
                 // print result from reconciliation if any
-                if (recon == null) System.out.println("not found");
+                if (recon == null) System.out.println("Not found.");
                 else System.out.println(recon.toString());
 
                 // for each atom, get all matches in order of relevance
@@ -64,7 +64,7 @@ public class Demo {
                 }
             }
 
-            System.out.println("bye");
+            System.out.println("Bye!");
 
         } catch (IOException e) {
             e.printStackTrace();
