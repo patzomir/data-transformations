@@ -44,8 +44,14 @@ public class IndexBuilder {
             "    }\n" +
             "}";
 
+    // query the official names of a place (variable place must be bound)
+    private static final String QUERY_NAMES_OFF = "PREFIX gn: <http://www.geonames.org/ontology#>\n" +
+            "SELECT ?name WHERE {\n" +
+            "    ?place gn:officialName ?name.\n" +
+            "}";
+
     // query the alternative names of a place (variable place must be bound)
-    private static final String QUERY_NAMES = "PREFIX gn: <http://www.geonames.org/ontology#>\n" +
+    private static final String QUERY_NAMES_ALT = "PREFIX gn: <http://www.geonames.org/ontology#>\n" +
             "SELECT ?name WHERE {\n" +
             "    ?place gn:alternateName ?name.\n" +
             "}";
@@ -110,11 +116,12 @@ public class IndexBuilder {
 
             // prepare SPARQL queries
             TupleQuery queryChildren = connection.prepareTupleQuery(QueryLanguage.SPARQL, QUERY_CHILDREN);
-            TupleQuery queryNames = connection.prepareTupleQuery(QueryLanguage.SPARQL, QUERY_NAMES);
+            TupleQuery queryNamesOff = connection.prepareTupleQuery(QueryLanguage.SPARQL, QUERY_NAMES_OFF);
+            TupleQuery queryNamesAlt = connection.prepareTupleQuery(QueryLanguage.SPARQL, QUERY_NAMES_ALT);
 
             // add children recursively, starting from the root
             queryChildren.setBinding("parent", root);
-            addChildren(index, Place.ROOT, queryChildren, queryNames);
+            addChildren(index, Place.ROOT, queryChildren, queryNamesOff, queryNamesAlt);
 
         } catch (RepositoryException e) {
             LOGGER.error("exception while building index", e);
@@ -131,10 +138,12 @@ public class IndexBuilder {
      * @param index The index to add children to.
      * @param parent The parent place.
      * @param queryChildren The prepared query for children.
-     * @param queryNames The prepared query for names.
+     * @param queryNamesOff The prepared query for official names.
+     * @param queryNamesAlt The prepared query for alternative names.
      * @throws QueryEvaluationException
      */
-    private static void addChildren(PlaceIndex index, Place parent, TupleQuery queryChildren, TupleQuery queryNames)
+    private static void addChildren(PlaceIndex index, Place parent, TupleQuery queryChildren,
+                                    TupleQuery queryNamesOff, TupleQuery queryNamesAlt)
             throws QueryEvaluationException {
         TupleQueryResult resultChildren = queryChildren.evaluate();
 
@@ -149,17 +158,35 @@ public class IndexBuilder {
                 // add the child and its main name to the index
                 Value name = childBindings.getValue("name");
                 index.add(child, name.stringValue());
-
-                // obtain the alternative names of the child
                 Value place = childBindings.getValue("place");
-                queryNames.setBinding("place", place);
-                TupleQueryResult resultNames = queryNames.evaluate();
+
+                // obtain the official names of the child
+                queryNamesOff.setBinding("place", place);
+                TupleQueryResult resultNamesOff = queryNamesOff.evaluate();
+
+                try {
+
+                    // add the child and each official name to the index
+                    while (resultNamesOff.hasNext()) {
+                        BindingSet nameBindings = resultNamesOff.next();
+                        Value offName = nameBindings.getValue("name");
+                        index.add(child, offName.stringValue());
+                    }
+
+                } catch (QueryEvaluationException e) {
+                    LOGGER.error("exception while querying official names of place: " + child.toString(), e);
+                } finally {
+                    resultNamesOff.close();
+                }
+
+                queryNamesAlt.setBinding("place", place);
+                TupleQueryResult resultNamesAlt = queryNamesAlt.evaluate();
 
                 try {
 
                     // add the child and each alternative name to the index
-                    while (resultNames.hasNext()) {
-                        BindingSet nameBindings = resultNames.next();
+                    while (resultNamesAlt.hasNext()) {
+                        BindingSet nameBindings = resultNamesAlt.next();
                         Value altName = nameBindings.getValue("name");
                         index.add(child, altName.stringValue());
                     }
@@ -167,7 +194,7 @@ public class IndexBuilder {
                 } catch (QueryEvaluationException e) {
                     LOGGER.error("exception while querying alternative names of place: " + child.toString(), e);
                 } finally {
-                    resultNames.close();
+                    resultNamesAlt.close();
                 }
 
                 // log some information
@@ -175,7 +202,7 @@ public class IndexBuilder {
 
                 // bind the parent variable to this child and add its children
                 queryChildren.setBinding("parent", place);
-                addChildren(index, child, queryChildren, queryNames);
+                addChildren(index, child, queryChildren, queryNamesOff, queryNamesAlt);
             }
 
         } catch (QueryEvaluationException e) {
