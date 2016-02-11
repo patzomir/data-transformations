@@ -14,6 +14,7 @@ import java.util.regex.Pattern;
 public class PlaceIndex implements Serializable {
 
     // regular expressions used in name normalization
+    private static final Pattern DIACR_SEQ = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
     private static final Pattern PUNCT_SEQ = Pattern.compile("\\p{Punct}+");
     private static final Pattern SPACE_SEQ = Pattern.compile("\\s+");
 
@@ -71,11 +72,12 @@ public class PlaceIndex implements Serializable {
      * @return The normalized name.
      */
     private static String normalizeName(String name) {
-        name = Normalizer.normalize(name, Normalizer.Form.NFKC);
-        name = name.toLowerCase();
+        name = Normalizer.normalize(name, Normalizer.Form.NFKD);
+        name = DIACR_SEQ.matcher(name).replaceAll("");
         name = PUNCT_SEQ.matcher(name).replaceAll(" ");
         name = SPACE_SEQ.matcher(name).replaceAll(" ");
         name = name.trim();
+        name = name.toLowerCase();
         return name;
     }
 }
