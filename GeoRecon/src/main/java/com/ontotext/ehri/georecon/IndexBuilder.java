@@ -28,7 +28,7 @@ public class IndexBuilder {
 
     // minimum population for populated places
     private static String FEATURE_POPULATED = "P.PPL";
-    private static int MIN_POPULATION = 1000;
+    private static int MIN_POPULATION = 100;
 
     // query the children of a place (variable parent must be bound)
     private static final String QUERY_CHILDREN = "PREFIX gn: <http://www.geonames.org/ontology#>\n" +

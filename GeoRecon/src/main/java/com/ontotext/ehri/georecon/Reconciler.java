@@ -26,6 +26,7 @@ public class Reconciler {
     // some access-point types in input file
     private static final String CORP_TYPE = "corporateBodyAccess";
     private static final String CREA_TYPE = "creatorAccess";
+    private static final String GENR_TYPE = "genreAccess";
     private static final String PERS_TYPE = "personAccess";
 
     /**
@@ -98,11 +99,12 @@ public class Reconciler {
                     fields = COLUMN_SPLITTER.split(line);
                     if (fields[typeColumn].equals(CORP_TYPE) ||
                             fields[typeColumn].equals(CREA_TYPE) ||
+                            fields[typeColumn].equals(GENR_TYPE) ||
                             fields[typeColumn].equals(PERS_TYPE)) continue;
 
                     // split list of atoms and reconcile them
                     String[] atoms = LIST_SPLITTER.split(fields[inputColumn]);
-                    Place place = reconcileShallow(index, atoms);
+                    Place place = reconcileDeep(index, atoms);
 
                     // write result
                     String result = "";
@@ -174,5 +176,83 @@ public class Reconciler {
 
         if (chosenOne != null && chosenOne.equals(Place.ROOT)) return null;
         return chosenOne;
+    }
+
+    /**
+     * Deep reconciliation tries to find a combination of matches for atoms, such that there is a descendant relation
+     * between the matches of all atoms. If such a combination exists, it returns the most specific match. Otherwise,
+     * it falls back to shallow reconciliation, which returns the closest common ancestor from the best matches only.
+     * @param index The index to use for lookup.
+     * @param atoms The atomic access points.
+     * @return The chosen place, or null if none of the atoms matches any place.
+     */
+    public static Place reconcileDeep(PlaceIndex index, String[] atoms) {
+        Set<Set<Place>> candidates = new HashSet<Set<Place>>();
+
+        // for each atom, add all matches to the set of candidates
+        for (String atom : atoms) {
+            Set<Place> matches = index.get(atom);
+            if (matches != null) candidates.add(matches);
+        }
+
+        // return null if there are no matches for any of the atoms
+        if (candidates.isEmpty()) return null;
+
+        // pick a random candidate out of the set
+        Set<Place> randomCandidate = candidates.iterator().next();
+        candidates.remove(randomCandidate);
+        Place chosenOne = null;
+
+        // iterate through the matches for the random candidate
+        for (Place randomCandidateMatch : randomCandidate) {
+            chosenOne = randomCandidateMatch;
+
+            // iterate through the other candidates
+            for (Set<Place> otherCandidate : candidates) {
+                Place commonDescendant = null;
+
+                // iterate through the matches for the other candidate
+                for (Place otherCandidateMatch : otherCandidate) {
+                    commonDescendant = findDescendant(randomCandidateMatch, otherCandidateMatch);
+
+                    // stop iterating if there is a common descendant and update the chosen one
+                    if (commonDescendant != null) {
+                        chosenOne = findDescendant(chosenOne, commonDescendant);
+                        if (chosenOne == null) return null;
+                        break;
+                    }
+                }
+
+                // go to the next match if there is no common descendant and reset the chosen one
+                if (commonDescendant == null) {
+                    chosenOne = null;
+                    break;
+                }
+            }
+
+            // stop iterating if there are no candidates without a common descendant
+            if (chosenOne != null) {
+                break;
+            }
+        }
+
+        // return the chosen one if found
+        if (chosenOne != null) return chosenOne;
+
+        // return the closest common ancestor among the best matches as fallback
+        return reconcileShallow(index, atoms);
+    }
+
+    /**
+     * Find the descendant among two places.
+     * @param one The first of the two places.
+     * @param two The second of the two places.
+     * @return The descendant among the two places, or null if there is no such relation between them.
+     */
+    private static Place findDescendant(Place one, Place two) {
+        Place closestCommon = one.closestCommon(two);
+        if (one.equals(closestCommon)) return two;
+        if (two.equals(closestCommon)) return one;
+        return null;
     }
 }

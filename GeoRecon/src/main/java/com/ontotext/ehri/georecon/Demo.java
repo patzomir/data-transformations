@@ -46,7 +46,7 @@ public class Demo {
             // reconcile user input
             while (! (input = scanner.nextLine().trim()).equals(CMD_QUIT)) {
                 String[] atoms = Reconciler.LIST_SPLITTER.split(input);
-                Place recon = Reconciler.reconcileShallow(index, atoms);
+                Place recon = Reconciler.reconcileDeep(index, atoms);
 
                 // print result from reconciliation if any
                 if (recon == null) System.out.println("Not found.");
