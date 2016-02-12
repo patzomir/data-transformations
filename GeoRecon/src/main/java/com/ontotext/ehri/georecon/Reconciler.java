@@ -31,23 +31,24 @@ public class Reconciler {
 
     /**
      * Run the program.
-     * @param args Command-line arguments: <index file> <input file> <input column> <type column> <output file> <output column>.
+     * @param args Command-line arguments: <index file> <stopword file> <input file> <input column> <type column> <output file> <output column>.
      */
     public static void main(String[] args) {
 
         // check arguments
         if (args.length != 6) {
             System.out.println("USAGE: java " + Reconciler.class.getName() +
-                    " <index file> <input file> <input column> <type column> <output file> <output column>");
+                    " <index file> <stopword file> <input file> <input column> <type column> <output file> <output column>");
             System.exit(0);
         }
 
         File indexFile = new File(args[0]);
-        File inputFile = new File(args[1]);
-        String inputColumnName = args[2];
-        String typeColumnName = args[3];
-        File outputFile = new File(args[4]);
-        String outputColumnName = args[5];
+        File stopwordFile = new File(args[1]);
+        File inputFile = new File(args[2]);
+        String inputColumnName = args[3];
+        String typeColumnName = args[4];
+        File outputFile = new File(args[5]);
+        String outputColumnName = args[6];
 
         try {
             LOGGER.info("loading index...");
@@ -56,15 +57,37 @@ public class Reconciler {
             long time = System.currentTimeMillis() - start;
             LOGGER.info("index loaded in " + time + " ms");
 
+            LOGGER.info("reading stopwords...");
+            start = System.currentTimeMillis();
+            FileReader fileReader = new FileReader(stopwordFile);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            Set<String> stopwords = new HashSet<String>();
+            String line;
+
+            try {
+
+                // add stopwords
+                while ((line = bufferedReader.readLine()) != null) {
+                    stopwords.add(PlaceIndex.normalizeName(line));
+                }
+
+            } finally {
+                bufferedReader.close();
+                fileReader.close();
+            }
+
+            time = System.currentTimeMillis() - start;
+            LOGGER.info("stopwords read in " + time + " ms");
+
             LOGGER.info("reconciling access points...");
             start = System.currentTimeMillis();
-            FileReader fileReader = new FileReader(inputFile);
-            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            fileReader = new FileReader(inputFile);
+            bufferedReader = new BufferedReader(fileReader);
             FileWriter fileWriter = new FileWriter(outputFile);
             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
 
             try {
-                String line = bufferedReader.readLine();
+                line = bufferedReader.readLine();
 
                 // check if input file is empty
                 if (line == null) {
@@ -104,6 +127,13 @@ public class Reconciler {
 
                     // split list of atoms and reconcile them
                     String[] atoms = LIST_SPLITTER.split(fields[inputColumn]);
+
+                    // remove stopwords
+                    for (String atom : atoms) {
+                        if (stopwords.contains(PlaceIndex.normalizeName(atom))) atom = null;
+                    }
+
+                    // reconcile
                     Place place = reconcileDeep(index, atoms);
 
                     // write result
@@ -141,6 +171,7 @@ public class Reconciler {
 
         // for each atom, add the most relevant match to the set of candidates
         for (String atom : atoms) {
+            if (atom == null) continue;
             Place match = index.getOne(atom);
             if (match != null) candidates.add(match);
         }
@@ -191,6 +222,7 @@ public class Reconciler {
 
         // for each atom, add all matches to the set of candidates
         for (String atom : atoms) {
+            if (atom == null) continue;
             Set<Place> matches = index.get(atom);
             if (matches != null) candidates.add(matches);
         }
