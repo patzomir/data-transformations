@@ -1,6 +1,8 @@
 package com.ontotext.ehri.georecon;
 
 import org.openrdf.model.Model;
+import org.openrdf.model.URI;
+import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
@@ -100,6 +102,7 @@ public class DumpLoader {
             LOGGER.error("exception while adding triples", e);
         } finally {
             connection.close();
+            fixData(repository);
             repository.shutDown();
             store.shutDown();
             bufferedReader.close();
@@ -146,5 +149,68 @@ public class DumpLoader {
         }
 
         return triples;
+    }
+
+    /**
+     * Fix some broken data.
+     * @param repository Sesame repository.
+     * @throws RepositoryException
+     */
+    private static void fixData(Repository repository) throws RepositoryException {
+        LOGGER.info("linking historical states...");
+        ValueFactory factory = repository.getValueFactory();
+        URI parent = factory.createURI("http://www.geonames.org/ontology#parentFeature");
+        URI europe = factory.createURI("http://sws.geonames.org/6255148/");
+        URI czechoslovakia = factory.createURI("http://sws.geonames.org/8505031/");
+        URI czech = factory.createURI("http://sws.geonames.org/3077311/");
+        URI slovakia = factory.createURI("http://sws.geonames.org/3057568/");
+        URI yugoslavia = factory.createURI("http://sws.geonames.org/7500737/");
+        URI serbiamontenegro = factory.createURI("http://sws.geonames.org/8505033/");
+        URI serbia = factory.createURI("http://sws.geonames.org/6290252/");
+        URI kosovo = factory.createURI("http://sws.geonames.org/831053/");
+        URI montenegro = factory.createURI("http://sws.geonames.org/3194884/");
+        URI bosniaherzegovina = factory.createURI("http://sws.geonames.org/3277605/");
+        URI croatia = factory.createURI("http://sws.geonames.org/3202326/");
+        URI macedonia = factory.createURI("http://sws.geonames.org/718075/");
+        URI slovenia = factory.createURI("http://sws.geonames.org/3190538/");
+        RepositoryConnection connection = repository.getConnection();
+
+        try {
+
+            // remove existing parent links
+            connection.remove(czechoslovakia, parent, null);
+            connection.remove(czech, parent, null);
+            connection.remove(slovakia, parent, null);
+            connection.remove(yugoslavia, parent, null);
+            connection.remove(serbiamontenegro, parent, null);
+            connection.remove(serbia, parent, null);
+            connection.remove(kosovo, parent, null);
+            connection.remove(montenegro, parent, null);
+            connection.remove(bosniaherzegovina, parent, null);
+            connection.remove(croatia, parent, null);
+            connection.remove(macedonia, parent, null);
+            connection.remove(slovenia, parent, null);
+
+            // add new parent links
+            connection.add(czechoslovakia, parent, europe);
+            connection.add(czech, parent, czechoslovakia);
+            connection.add(slovakia, parent, czechoslovakia);
+            connection.add(yugoslavia, parent, europe);
+            connection.add(serbiamontenegro, parent, yugoslavia);
+            connection.add(serbia, parent, serbiamontenegro);
+            connection.add(kosovo, parent, serbia);
+            connection.add(montenegro, parent, serbiamontenegro);
+            connection.add(bosniaherzegovina, parent, yugoslavia);
+            connection.add(croatia, parent, yugoslavia);
+            connection.add(macedonia, parent, yugoslavia);
+            connection.add(slovenia, parent, yugoslavia);
+
+        } catch (RepositoryException e) {
+            LOGGER.error("exception while fixing data", e);
+        } finally {
+            connection.close();
+        }
+
+        LOGGER.info("historical states linked");
     }
 }

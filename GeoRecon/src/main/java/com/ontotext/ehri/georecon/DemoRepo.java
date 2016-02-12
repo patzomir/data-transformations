@@ -39,7 +39,6 @@ public class DemoRepo {
             NativeStore store = new NativeStore(repo);
             Repository repository = new SailRepository(store);
             repository.initialize();
-            fixOrphans(repository);
             RepositoryConnection connection = repository.getConnection();
             long time = System.currentTimeMillis() - start;
             System.out.println("Repository started in " + time + " ms.");
@@ -96,40 +95,5 @@ public class DemoRepo {
         } catch (SailException e) {
             e.printStackTrace();
         }
-    }
-
-    /**
-     * Fix some places that are linked to a dummy, non-existing parent place.
-     * @param repository The Sesame repository.
-     * @throws RepositoryException
-     */
-    private static void fixOrphans(Repository repository) throws RepositoryException {
-        ValueFactory factory = repository.getValueFactory();
-        URI parent = factory.createURI("http://www.geonames.org/ontology#parentFeature");
-        URI dummy = factory.createURI("http://sws.geonames.org/0/");
-        URI europe = factory.createURI("http://sws.geonames.org/6255148/");
-        URI czechoslovakia = factory.createURI("http://sws.geonames.org/8505031/");
-        URI serbiaMontenegro = factory.createURI("http://sws.geonames.org/8505033/");
-
-        System.out.println("Fixing orphans...");
-        RepositoryConnection connection = repository.getConnection();
-
-        try {
-
-            // remove wrong triples
-            connection.remove(czechoslovakia, parent, dummy);
-            connection.remove(serbiaMontenegro, parent, dummy);
-
-            // add correct triples
-            connection.add(czechoslovakia, parent, europe);
-            connection.add(serbiaMontenegro, parent, europe);
-
-        } catch (RepositoryException e) {
-            e.printStackTrace();
-        } finally {
-            connection.close();
-        }
-
-        System.out.println("Orphans fixed!");
     }
 }
