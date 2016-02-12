@@ -218,7 +218,7 @@ public class Reconciler {
                     // stop iterating if there is a common descendant and update the chosen one
                     if (commonDescendant != null) {
                         chosenOne = findDescendant(chosenOne, commonDescendant);
-                        if (chosenOne == null) return null;
+                        if (chosenOne == null) return reconcileShallow(index, atoms);
                         break;
                     }
                 }
