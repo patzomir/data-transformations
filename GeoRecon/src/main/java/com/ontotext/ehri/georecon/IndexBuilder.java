@@ -278,11 +278,13 @@ public class IndexBuilder {
      */
     private static PlaceType classifyPlace(String feature) {
 
+        // skip streams
+        if (feature.startsWith("H.STM")) return null;
+
         // specific feature codes
         if (feature.startsWith("A.PCL")) return PlaceType.A_PCL;
         if (feature.startsWith("S.ADMF")) return PlaceType.S_ADMF;
         if (feature.startsWith("S.BDG")) return PlaceType.S_BDG;
-        if (feature.startsWith("S.CH")) return PlaceType.S_CH;
         if (feature.startsWith("S.CMTY")) return PlaceType.S_CMTY;
         if (feature.startsWith("S.HSTS")) return PlaceType.S_HSTS;
         if (feature.startsWith("S.MNMT")) return PlaceType.S_MNMT;

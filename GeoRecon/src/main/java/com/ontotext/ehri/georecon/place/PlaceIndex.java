@@ -1,6 +1,6 @@
 package com.ontotext.ehri.georecon.place;
 
-import java.io.Serializable;
+import java.io.*;
 import java.text.Normalizer;
 import java.util.HashMap;
 import java.util.Map;
