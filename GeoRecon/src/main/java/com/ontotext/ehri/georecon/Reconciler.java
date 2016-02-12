@@ -36,7 +36,7 @@ public class Reconciler {
     public static void main(String[] args) {
 
         // check arguments
-        if (args.length != 6) {
+        if (args.length != 7) {
             System.out.println("USAGE: java " + Reconciler.class.getName() +
                     " <index file> <stopword file> <input file> <input column> <type column> <output file> <output column>");
             System.exit(0);
