@@ -129,8 +129,8 @@ public class Reconciler {
                     String[] atoms = LIST_SPLITTER.split(fields[inputColumn]);
 
                     // remove stopwords
-                    for (String atom : atoms) {
-                        if (stopwords.contains(PlaceIndex.normalizeName(atom))) atom = null;
+                    for (int i = 0; i < atoms.length; i++) {
+                        if (stopwords.contains(PlaceIndex.normalizeName(atoms[i]))) atoms[i] = null;
                     }
 
                     // reconcile
