@@ -2,7 +2,6 @@ package com.ontotext.ehri.georecon;
 
 import com.ontotext.ehri.georecon.place.Place;
 import com.ontotext.ehri.georecon.place.PlaceIndex;
-import com.ontotext.ehri.georecon.place.PlaceType;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.query.*;
@@ -25,10 +24,6 @@ public class IndexBuilder {
 
     // prefix added before GeoNames feature codes
     private static String FEATURE_PREFIX = "http://www.geonames.org/ontology#";
-
-    // minimum population for populated places
-    private static String FEATURE_POPULATED = "P.PPL";
-    private static int MIN_POPULATION = 100;
 
     // query the children of a place (variable parent must be bound)
     private static final String QUERY_CHILDREN = "PREFIX gn: <http://www.geonames.org/ontology#>\n" +
@@ -197,9 +192,6 @@ public class IndexBuilder {
                     resultNamesAlt.close();
                 }
 
-                // log some information
-                if (child.getType() == PlaceType.A_PCL) LOGGER.info("entering new country: " + child.lineageString());
-
                 // bind the parent variable to this child and add its children
                 queryChildren.setBinding("parent", place);
                 addChildren(index, child, queryChildren, queryNamesOff, queryNamesAlt);
@@ -216,7 +208,8 @@ public class IndexBuilder {
      * Build a place with the given parent place and variable bindings.
      * @param parent The parent place.
      * @param bindings The variable bindings from the children query.
-     * @return A place with the given parent built from the given variable bindings, or null if something bad happens.
+     * @return A place with the given parent built from the given variable bindings, or null if the GeoNames ID cannot
+     * be extracted from the GeoNames URL.
      */
     private static Place buildPlace(Place parent, BindingSet bindings) {
         Value placeValue = bindings.getValue("place");
@@ -234,10 +227,10 @@ public class IndexBuilder {
             geoID = Integer.parseInt(geoURL.substring(startPos, endPos));
         } catch (NumberFormatException e) {
             LOGGER.warn("cannot extract ID from URL: " + placeValue.stringValue(), e);
-            return null;
+            return null; // cannot build place without ID
         }
 
-        // parse coordinates
+        // parse coordinates if available
         double latitude = 0;
         double longitude = 0;
         try {
@@ -257,52 +250,13 @@ public class IndexBuilder {
             }
         }
 
-        // extract feature and classify place
-        PlaceType type = null;
-        if (featureValue.stringValue().startsWith(FEATURE_PREFIX)) {
-            String feature = featureValue.stringValue().substring(FEATURE_PREFIX.length());
-            if (feature.equals(FEATURE_POPULATED) && population < MIN_POPULATION) return null;
-            type = classifyPlace(feature);
-        } else {
-            LOGGER.warn("cannot extract feature from URL: " + featureValue.stringValue());
-        }
-        if (type == null) return null;
+        // extract feature if available
+        String feature = "";
+        String featureURL = featureValue.stringValue();
+        if (featureURL.startsWith(FEATURE_PREFIX)) feature = featureURL.substring(FEATURE_PREFIX.length());
+        else LOGGER.warn("cannot extract feature from URL: " + featureURL);
 
-        return new Place(geoID, latitude, longitude, population, type, parent);
-    }
-
-    /**
-     * Classify a place given its GeoNames feature code.
-     * @param feature The GeoNames feature code.
-     * @return The corresponding place type.
-     */
-    private static PlaceType classifyPlace(String feature) {
-
-        // skip streams
-        if (feature.startsWith("H.STM")) return null;
-
-        // specific feature codes
-        if (feature.startsWith("A.PCL")) return PlaceType.A_PCL;
-        if (feature.startsWith("S.ADMF")) return PlaceType.S_ADMF;
-        if (feature.startsWith("S.BDG")) return PlaceType.S_BDG;
-        if (feature.startsWith("S.CMTY")) return PlaceType.S_CMTY;
-        if (feature.startsWith("S.HSTS")) return PlaceType.S_HSTS;
-        if (feature.startsWith("S.MNMT")) return PlaceType.S_MNMT;
-        if (feature.startsWith("S.MUS")) return PlaceType.S_MUS;
-        if (feature.startsWith("S.PRN")) return PlaceType.S_PRN;
-        if (feature.startsWith("S.RUIN")) return PlaceType.S_RUIN;
-
-        // classes of feature codes
-        if (feature.startsWith("A.")) return PlaceType.A;
-        if (feature.startsWith("H.")) return PlaceType.H;
-        if (feature.startsWith("L.")) return PlaceType.L;
-        if (feature.startsWith("P.")) return PlaceType.P;
-        if (feature.startsWith("R.")) return PlaceType.R;
-        if (feature.startsWith("T.")) return PlaceType.T;
-        if (feature.startsWith("U.")) return PlaceType.U;
-        if (feature.startsWith("V.")) return PlaceType.V;
-
-        // ignore irrelevant feature codes
-        return null;
+        // build place
+        return new Place(geoID, latitude, longitude, population, feature, parent);
     }
 }

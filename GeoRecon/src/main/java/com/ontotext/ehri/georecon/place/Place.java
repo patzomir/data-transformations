@@ -15,7 +15,7 @@ import java.util.LinkedList;
 public class Place implements Comparable<Place>, Serializable {
 
     // the root of the place tree: http://www.geonames.org/6295630/ (Earth)
-    public static final Place ROOT = new Place(6295630, 0, 0, 6814400000L, PlaceType.L, null);
+    public static final Place ROOT = new Place(6295630, 0, 0, 6814400000L, "L.AREA", null);
 
     // prefix and suffix to add to the GeoNames ID when constructing the GeoNames URL
     public static final String URL_PREFIX = "http://sws.geonames.org/";
@@ -31,15 +31,15 @@ public class Place implements Comparable<Place>, Serializable {
     private int geoID;
     private double latitude, longitude;
     private long population;
-    private PlaceType type;
+    private String feature;
     private Place parent;
 
-    public Place(int geoID, double latitude, double longitude, long population, PlaceType type, Place parent) {
+    public Place(int geoID, double latitude, double longitude, long population, String feature, Place parent) {
         this.geoID = geoID;
         this.latitude = latitude;
         this.longitude = longitude;
         this.population = population;
-        this.type = type;
+        this.feature = feature;
         this.parent = parent;
     }
 
@@ -59,8 +59,8 @@ public class Place implements Comparable<Place>, Serializable {
         return population;
     }
 
-    public PlaceType getType() {
-        return type;
+    public String getFeature() {
+        return feature;
     }
 
     public Place getParent() {
@@ -252,10 +252,6 @@ public class Place implements Comparable<Place>, Serializable {
     public int compareTo(Place o) {
         if (this == o) return 0;
         if (geoID == o.geoID) return 0;
-
-        // prefer countries
-        if (type == PlaceType.A_PCL && o.type != PlaceType.A_PCL) return -1;
-        else if (type != PlaceType.A_PCL && o.type == PlaceType.A_PCL) return 1;
 
         // prefer more populated places
         if (population > o.population) return -1;
