@@ -157,8 +157,9 @@ public class DumpLoader {
      * @throws RepositoryException
      */
     private static void fixData(Repository repository) throws RepositoryException {
-        LOGGER.info("linking historical states...");
+        LOGGER.info("fixing data...");
         ValueFactory factory = repository.getValueFactory();
+
         URI parent = factory.createURI("http://www.geonames.org/ontology#parentFeature");
         URI europe = factory.createURI("http://sws.geonames.org/6255148/");
         URI czechoslovakia = factory.createURI("http://sws.geonames.org/8505031/");
@@ -173,6 +174,12 @@ public class DumpLoader {
         URI croatia = factory.createURI("http://sws.geonames.org/3202326/");
         URI macedonia = factory.createURI("http://sws.geonames.org/718075/");
         URI slovenia = factory.createURI("http://sws.geonames.org/3190538/");
+
+        URI alternate = factory.createURI("http://www.geonames.org/ontology#alternateName");
+        URI ussr = factory.createURI("http://sws.geonames.org/8354411/");
+        URI auschwitz = factory.createURI("http://sws.geonames.org/7701596/");
+        URI vapnyarka = factory.createURI("http://sws.geonames.org/690485/");
+
         RepositoryConnection connection = repository.getConnection();
 
         try {
@@ -205,12 +212,17 @@ public class DumpLoader {
             connection.add(macedonia, parent, yugoslavia);
             connection.add(slovenia, parent, yugoslavia);
 
+            // add alternate names
+            connection.add(ussr, alternate, factory.createLiteral("USSR"));
+            connection.add(auschwitz, alternate, factory.createLiteral("Auschwitz-Birkenau"));
+            connection.add(vapnyarka, alternate, factory.createLiteral("Vapniarka"));
+
         } catch (RepositoryException e) {
             LOGGER.error("exception while fixing data", e);
         } finally {
             connection.close();
         }
 
-        LOGGER.info("historical states linked");
+        LOGGER.info("data fixed");
     }
 }

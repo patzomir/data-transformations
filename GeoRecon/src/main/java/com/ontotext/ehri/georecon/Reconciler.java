@@ -39,7 +39,7 @@ public class Reconciler {
     }
 
     // match acronyms except for some countries
-    private static final Pattern ACRO_PATTERN = Pattern.compile("(?!^DDR|USA$)^[A-Z]+$");
+    private static final Pattern ACRO_PATTERN = Pattern.compile("(?!^DDR|USA|USSR$)^[A-Z]+$");
 
     // match names of people
     private static final Pattern PERS_PATTERN = Pattern.compile("^[A-Z]?[a-z]+, [A-Z]?[a-z]+" +
