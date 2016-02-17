@@ -167,7 +167,7 @@ sub split_lists {
     # trim leading or trailing brackets and split
     foreach (@{$_[0]}) {
         $_ =~ s/^[\(\)\[\]]+|[\(\)\[\]]+$//g;
-        $_ =~ s/(\D)\.\s/ . /g;
+        $_ =~ s/(\D)\.\s/$1 . /g;
         push($result, split(/[\(\)\[\],;:=]+|\s[\/\.]\s/));
     }
 
