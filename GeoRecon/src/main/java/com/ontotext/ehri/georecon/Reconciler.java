@@ -42,7 +42,7 @@ public class Reconciler {
     private static final Pattern ACRO_PATTERN = Pattern.compile("(?!^DDR|USA$)^[A-Z]+$");
 
     // match names of people
-    private static final Pattern PERS_PATTERN = Pattern.compile("^[A-Z][a-z]+, [A-Z][a-z]+" +
+    private static final Pattern PERS_PATTERN = Pattern.compile("^[A-Z]?[a-z]+, [A-Z]?[a-z]+" +
             "( (vom|von dem|von der|von|von und zu|zu|zur|op ten|van|van de|van den|van der|de))?" +
             "( \\([^\\)]+\\))?$");
 
