@@ -39,10 +39,10 @@ public class Reconciler {
     }
 
     // match acronyms except for some countries
-    private static final Pattern ACRO_PATTERN = Pattern.compile("(?!^DDR|USA|USSR$)^[A-Z]+$");
+    private static final Pattern ACRO_PATTERN = Pattern.compile("(?!^DDR|USA|USSR$)^[\\d\\p{IsLu}]+$");
 
     // match names of people
-    private static final Pattern PERS_PATTERN = Pattern.compile("^[A-Z]?[a-z]+, [A-Z]?[a-z]+" +
+    private static final Pattern PERS_PATTERN = Pattern.compile("^\\p{IsLu}?\\p{IsLl}+, (\\p{IsLu}?(\\p{IsLl}+|\\.)|\\[\\?\\])" +
             "( (vom|von dem|von der|von|von und zu|zu|zur|op ten|van|van de|van den|van der|de))?" +
             "( \\([^\\)]+\\))?$");
 
@@ -121,16 +121,14 @@ public class Reconciler {
                 // process each line
                 while ((line = bufferedReader.readLine()) != null) {
                     fields = COLUMN_SPLITTER.split(line);
-
-                    // skip access-point types that are not allowed
-                    if (! ALLOWED_TYPES.contains(fields[typeColumn])) continue;
-
-                    // skip original access points that look like people
-                    if (PERS_PATTERN.matcher(fields[originalColumn]).matches()) continue;
-
-                    // reconcile atomized access points
                     String[] atoms = LIST_SPLITTER.split(fields[inputColumn]);
                     Place place = reconcile(index, atoms);
+
+                    // ignore if access-point type is not allowed
+                    if (! ALLOWED_TYPES.contains(fields[typeColumn])) place = null;
+
+                    // ignore if original access point looks like person
+                    if (PERS_PATTERN.matcher(fields[originalColumn]).matches()) place = null;
 
                     // write result
                     String result = "";
