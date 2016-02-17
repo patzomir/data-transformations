@@ -154,6 +154,12 @@ public class Reconciler {
         }
     }
 
+    /**
+     * Collect the lines in a file into a set.
+     * @param file The file.
+     * @param doNormalize If true, will perform normalization.
+     * @return The set.
+     */
     private static Set<String> collectLines(File file, boolean doNormalize) {
         Set<String> lines = new HashSet<String>();
 
@@ -241,135 +247,5 @@ public class Reconciler {
 
         // return the first match with the most ancestors
         return candidates.get(candidates.size() - 1).iterator().next();
-    }
-
-    /**
-     * Shallow reconciliation considers only the most relevant match for each atom. For places that belong to the same
-     * lineage, it chooses the most specific place (e.g. "Amsterdam" from "Netherlands, Noord-Holland, Amsterdam").
-     * Otherwise, it chooses the closest common ancestor (e.g. "Netherlands" from "Amsterdam, Utrecht, Groningen").
-     * @param index The index to use for lookup.
-     * @param atoms The atomic access points.
-     * @return The chosen place, or null if none of the atoms matches any place.
-     */
-    public static Place reconcileShallow(PlaceIndex index, String[] atoms) {
-        Set<Place> candidates = new HashSet<Place>();
-
-        // for each atom, add the most relevant match to the set of candidates
-        for (String atom : atoms) {
-            if (atom == null) continue;
-            Place match = index.getOne(atom);
-            if (match != null) candidates.add(match);
-        }
-
-        // initialize merged lineage
-        Deque<Set<Place>> mergedLineage = new LinkedList<Set<Place>>();
-
-        // iterate through candidate lineages
-        for (Place candidate : candidates) {
-            Deque<Place> lineage = candidate.lineage();
-
-            // extend merged lineage if necessary
-            while (mergedLineage.size() < lineage.size()) {
-                mergedLineage.add(new HashSet<Place>());
-            }
-
-            Iterator<Set<Place>> mergedIterator = mergedLineage.iterator();
-
-            // add each place in the candidate lineage to the merged lineage
-            for (Place place : lineage) {
-                mergedIterator.next().add(place);
-            }
-        }
-
-        Place chosenOne = null;
-
-        for (Set<Place> places : mergedLineage) {
-
-            // move the chosen one downwards till lineages diverge
-            if (places.size() == 1) chosenOne = places.iterator().next();
-            else break;
-        }
-
-        if (chosenOne != null && chosenOne.equals(Place.ROOT)) return null;
-        return chosenOne;
-    }
-
-    /**
-     * Deep reconciliation tries to find a combination of matches for atoms, such that there is a descendant relation
-     * between the matches of all atoms. If such a combination exists, it returns the most specific match. Otherwise,
-     * it falls back to shallow reconciliation, which returns the closest common ancestor from the best matches only.
-     * @param index The index to use for lookup.
-     * @param atoms The atomic access points.
-     * @return The chosen place, or null if none of the atoms matches any place.
-     */
-    public static Place reconcileDeep(PlaceIndex index, String[] atoms) {
-        Set<Set<Place>> candidates = new HashSet<Set<Place>>();
-
-        // for each atom, add all matches to the set of candidates
-        for (String atom : atoms) {
-            if (atom == null) continue;
-            Set<Place> matches = index.get(atom);
-            if (matches != null) candidates.add(matches);
-        }
-
-        // return null if there are no matches for any of the atoms
-        if (candidates.isEmpty()) return null;
-
-        // pick a random candidate out of the set
-        Set<Place> randomCandidate = candidates.iterator().next();
-        candidates.remove(randomCandidate);
-        Place chosenOne = null;
-
-        // iterate through the matches for the random candidate
-        for (Place randomCandidateMatch : randomCandidate) {
-            chosenOne = randomCandidateMatch;
-
-            // iterate through the other candidates
-            for (Set<Place> otherCandidate : candidates) {
-                Place commonDescendant = null;
-
-                // iterate through the matches for the other candidate
-                for (Place otherCandidateMatch : otherCandidate) {
-                    commonDescendant = findDescendant(randomCandidateMatch, otherCandidateMatch);
-
-                    // stop iterating if there is a common descendant and update the chosen one
-                    if (commonDescendant != null) {
-                        chosenOne = findDescendant(chosenOne, commonDescendant);
-                        if (chosenOne == null) return reconcileShallow(index, atoms);
-                        break;
-                    }
-                }
-
-                // go to the next match if there is no common descendant and reset the chosen one
-                if (commonDescendant == null) {
-                    chosenOne = null;
-                    break;
-                }
-            }
-
-            // stop iterating if there are no candidates without a common descendant
-            if (chosenOne != null) {
-                break;
-            }
-        }
-
-        // return the chosen one if found
-        if (chosenOne != null) return chosenOne;
-
-        // return the closest common ancestor among the best matches as fallback
-        return reconcileShallow(index, atoms);
-    }
-
-    /**
-     * Find the descendant among two places.
-     * @param one The first of the two places.
-     * @param two The second of the two places.
-     * @return The descendant among the two places, or null if there is no such relation between them.
-     */
-    private static Place findDescendant(Place one, Place two) {
-        Place closestCommon = one.closestCommon(two);
-        if (one.equals(closestCommon)) return two;
-        if (two.equals(closestCommon)) return one;
-        return null;
     }
 }
