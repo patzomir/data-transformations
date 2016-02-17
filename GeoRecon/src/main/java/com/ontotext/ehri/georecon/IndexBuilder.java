@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Build place index from Sesame repository and serialize it to disk.
@@ -141,7 +143,6 @@ public class IndexBuilder {
                                     TupleQuery queryNamesOff, TupleQuery queryNamesAlt)
             throws QueryEvaluationException {
         TupleQueryResult resultChildren = queryChildren.evaluate();
-
         try {
 
             // build each child place
@@ -150,22 +151,21 @@ public class IndexBuilder {
                 Place child = buildPlace(parent, childBindings);
                 if (child == null) continue;
 
-                // add the child and its main name to the index
-                Value name = childBindings.getValue("name");
-                index.add(child, name.stringValue());
+                // collect the main name of the child
+                Set<String> names = new HashSet<String>();
                 Value place = childBindings.getValue("place");
+                Value mainName = childBindings.getValue("name");
+                names.add(mainName.stringValue());
 
-                // obtain the official names of the child
+                // collect the official names of the child
                 queryNamesOff.setBinding("place", place);
                 TupleQueryResult resultNamesOff = queryNamesOff.evaluate();
-
                 try {
 
-                    // add the child and each official name to the index
                     while (resultNamesOff.hasNext()) {
                         BindingSet nameBindings = resultNamesOff.next();
                         Value offName = nameBindings.getValue("name");
-                        index.add(child, offName.stringValue());
+                        names.add(offName.stringValue());
                     }
 
                 } catch (QueryEvaluationException e) {
@@ -174,22 +174,27 @@ public class IndexBuilder {
                     resultNamesOff.close();
                 }
 
+                // collect the alternative names of the child
                 queryNamesAlt.setBinding("place", place);
                 TupleQueryResult resultNamesAlt = queryNamesAlt.evaluate();
-
                 try {
 
-                    // add the child and each alternative name to the index
                     while (resultNamesAlt.hasNext()) {
                         BindingSet nameBindings = resultNamesAlt.next();
                         Value altName = nameBindings.getValue("name");
-                        index.add(child, altName.stringValue());
+                        names.add(altName.stringValue());
                     }
 
                 } catch (QueryEvaluationException e) {
                     LOGGER.error("exception while querying alternative names of place: " + child.toString(), e);
                 } finally {
                     resultNamesAlt.close();
+                }
+
+                // add the child with all its names to the index
+                for (String name : names) {
+                    index.add(child, name);
+                    index.add(child, expandUmlauts(name)); // additional spelling variants for German places
                 }
 
                 // bind the parent variable to this child and add its children
@@ -258,5 +263,14 @@ public class IndexBuilder {
 
         // build place
         return new Place(geoID, latitude, longitude, population, feature, parent);
+    }
+
+    /**
+     * Turns the given name to lowercase and expands German umlauts.
+     * @param name The name.
+     * @return The name with all letter in lowercase and German umlauts expanded.
+     */
+    private static String expandUmlauts(String name) {
+        return name.toLowerCase().replace("ä", "ae").replace("ö", "oe").replace("ü", "ue");
     }
 }
