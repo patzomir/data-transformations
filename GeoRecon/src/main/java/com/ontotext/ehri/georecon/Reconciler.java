@@ -36,15 +36,18 @@ public class Reconciler {
     static {
         ALLOWED_TYPES.add("placeAccess");
         ALLOWED_TYPES.add("subjectAccess");
+        ALLOWED_TYPES.add("corporateBodyAccess");
     }
 
     // match acronyms except for some countries
     private static final Pattern ACRO_PATTERN = Pattern.compile("(?!^DDR|USA|USSR$)^[\\d\\p{IsLu}]+$");
 
     // match names of people
-    private static final Pattern PERS_PATTERN = Pattern.compile("^\\p{IsLu}?\\p{IsLl}+, (\\p{IsLu}?(\\p{IsLl}+|\\.)|\\[\\?\\])" +
-            "( (vom|von dem|von der|von|von und zu|zu|zur|op ten|van|van de|van den|van der|de))?" +
-            "( \\([^\\)]+\\))?$");
+    private static final Pattern PERS_PATTERN = Pattern.compile("^((de|van de|van den|van der|vander|van|von|zur) )?" + // particles
+            "\\p{IsLu}?\\p{IsLl}+, (?!(city|town|village|село|селище)$)" + // last name
+            "(\\p{IsLu}?(\\p{IsLl}+(\\-\\p{IsLu}?\\p{IsLl}+)?|\\.|\\[\\?\\]))" + // first name
+            "( (vom|von dem|von der|von|von und zu|zu|zur|op ten|van|van de|van den|van der|de))?" + // particles
+            "( \\([^\\p{IsL}][^\\)]+\\))?$"); // stuff in brackets
 
     /**
      * Run the program.
