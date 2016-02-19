@@ -47,7 +47,7 @@ public class Reconciler {
             "\\p{IsLu}?\\p{IsLl}+, (?!(city|town|village|село|селище)$)" + // last name
             "(\\p{IsLu}?(\\p{IsLl}+(\\-\\p{IsLu}?\\p{IsLl}+)?|\\.|\\[\\?\\]))" + // first name
             "( (vom|von dem|von der|von|von und zu|zu|zur|op ten|van|van de|van den|van der|de))?" + // particles
-            "( \\([^\\p{IsL}][^\\)]+\\))?$"); // stuff in brackets
+            "( \\([^\\p{IsL}][^\\)]+\\)|\\s?\\p{IsLu}?\\[.+\\])?$"); // stuff in brackets
 
     /**
      * Run the program.
