@@ -43,7 +43,8 @@ public class Reconciler {
     private static final Pattern ACRO_PATTERN = Pattern.compile("(?!^DDR|USA|USSR$)^[\\d\\p{IsLu}]+$");
 
     // match names of people
-    private static final Pattern PERS_PATTERN = Pattern.compile("^((de|van de|van den|van der|vander|van|von|zur) )?" + // particles
+    private static final Pattern PERS_PATTERN = Pattern.compile("(?!.*(Amsterdam|Brabant|Drenthe|Friesland|Gelderland|Groningen|Haarlem|Limburg))" + // exceptions
+            "^((de|van de|van den|van der|vander|van|von|zur) )?" + // particles
             "\\p{IsLu}?\\p{IsLl}+, (?!(city|town|village|село|селище)$)" + // last name
             "(\\p{IsLu}?(\\p{IsLl}+(\\-\\p{IsLu}?\\p{IsLl}+)?|\\.|\\[\\?\\]))" + // first name
             "( (vom|von dem|von der|von|von und zu|zu|zur|op ten|van|van de|van den|van der|de))?" + // particles
