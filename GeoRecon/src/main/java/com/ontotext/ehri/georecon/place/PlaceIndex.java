@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 public class PlaceIndex implements Serializable {
 
     // regular expressions used in name normalization
-    private static final Pattern COMBINING_SEQ = Pattern.compile("['\\p{InSpacingModifierLetters}" +
+    private static final Pattern COMBINING_SEQ = Pattern.compile("['’\\p{InSpacingModifierLetters}" +
             "\\p{InCombiningDiacriticalMarks}\\p{InCombiningDiacriticalMarksSupplement}\\p{InCombiningHalfMarks}]+");
     private static final Pattern PUNCTUATION_SEQ = Pattern.compile("\\p{Punct}+");
     private static final Pattern SPACE_SEQ = Pattern.compile("\\s+");
