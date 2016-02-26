@@ -130,24 +130,27 @@ public class Reconciler {
                     fields = COLUMN_SPLITTER.split(line);
                     String[] atoms = LIST_SPLITTER.split(fields[inputColumn]);
 
+                    // ignore if access-point type is not allowed
+                    if (! ALLOWED_TYPES.contains(fields[typeColumn])) atoms = null;
+
+                    // ignore if original access point looks like person
+                    if (PERS_PATTERN.matcher(fields[originalColumn]).matches()) atoms = null;
+
                     // clean atoms
-                    for (int i = 0; i < atoms.length; i++) {
-                        if (STOPWORDS.contains(PlaceIndex.normalizeName(atoms[i]))) atoms[i] = null;
-                        else if (ACRO_PATTERN.matcher(atoms[i]).matches()) atoms[i] = null;
-                        else atoms[i] = JUNK_PATTERN.matcher(atoms[i]).replaceAll("");
+                    if (atoms != null) {
+
+                        for (int i = 0; i < atoms.length; i++) {
+                            if (STOPWORDS.contains(PlaceIndex.normalizeName(atoms[i]))) atoms[i] = null;
+                            else if (ACRO_PATTERN.matcher(atoms[i]).matches()) atoms[i] = null;
+                            else atoms[i] = JUNK_PATTERN.matcher(atoms[i]).replaceAll("");
+                        }
                     }
 
                     // reconcile atoms
                     Set<Place> places = reconcile(index, atoms);
-
-                    // ignore if access-point type is not allowed
-                    if (! ALLOWED_TYPES.contains(fields[typeColumn])) places = null;
-
-                    // ignore if original access point looks like person
-                    if (PERS_PATTERN.matcher(fields[originalColumn]).matches()) places = null;
+                    StringBuilder result = new StringBuilder();
 
                     // collect result
-                    StringBuilder result = new StringBuilder();
                     if (places != null) {
                         Iterator<Place> iterator = places.iterator();
                         result.append(iterator.next().toString());
@@ -220,6 +223,7 @@ public class Reconciler {
      * @return The most relevant matching places or null if no matches are found.
      */
     public static Set<Place> reconcile(PlaceIndex index, String[] atoms) {
+        if (atoms == null) return null;
         List<Set<Place>> candidates = new ArrayList<Set<Place>>();
 
         // iterate through valid atoms
