@@ -50,6 +50,9 @@ public class Reconciler {
             "( (vom|von dem|von der|von|von und zu|zu|zur|op ten|van|van de|van den|van der|de))?" + // particles
             "( \\([^\\p{IsL}][^\\)]+\\)|\\s?\\p{IsLu}?\\[.+\\])?$"); // stuff in brackets
 
+    // match junk to remove
+    private static final Pattern JUNK_PATTERN = Pattern.compile("^(British Mandate For |Kreis )");
+
     /**
      * Run the program.
      * @param args Command-line arguments: <index file> <input file> <input column> <original column> <type column> <output file> <output column>.
@@ -126,18 +129,36 @@ public class Reconciler {
                 while ((line = bufferedReader.readLine()) != null) {
                     fields = COLUMN_SPLITTER.split(line);
                     String[] atoms = LIST_SPLITTER.split(fields[inputColumn]);
-                    Place place = reconcile(index, atoms);
+
+                    // clean atoms
+                    for (int i = 0; i < atoms.length; i++) {
+                        if (STOPWORDS.contains(PlaceIndex.normalizeName(atoms[i]))) atoms[i] = null;
+                        else if (ACRO_PATTERN.matcher(atoms[i]).matches()) atoms[i] = null;
+                        else atoms[i] = JUNK_PATTERN.matcher(atoms[i]).replaceAll("");
+                    }
+
+                    // reconcile atoms
+                    Set<Place> places = reconcile(index, atoms);
 
                     // ignore if access-point type is not allowed
-                    if (! ALLOWED_TYPES.contains(fields[typeColumn])) place = null;
+                    if (! ALLOWED_TYPES.contains(fields[typeColumn])) places = null;
 
                     // ignore if original access point looks like person
-                    if (PERS_PATTERN.matcher(fields[originalColumn]).matches()) place = null;
+                    if (PERS_PATTERN.matcher(fields[originalColumn]).matches()) places = null;
+
+                    // collect result
+                    StringBuilder result = new StringBuilder();
+                    if (places != null) {
+                        Iterator<Place> iterator = places.iterator();
+                        result.append(iterator.next().toString());
+
+                        while (iterator.hasNext()) {
+                            result.append(LIST_SEPARATOR + iterator.next().toString());
+                        }
+                    }
 
                     // write result
-                    String result = "";
-                    if (place != null) result = place.toString();
-                    bufferedWriter.write(result + COLUMN_SEPARATOR + line + "\n");
+                    bufferedWriter.write(result.toString() + COLUMN_SEPARATOR + line + "\n");
                 }
 
             } catch (IOException e) {
@@ -193,22 +214,22 @@ public class Reconciler {
     }
 
     /**
-     * Lookup places from an array of atomized access points and return the most relevant place.
+     * Lookup places from an array of atomized access points and return the most relevant places.
      * @param index The lookup index to use.
      * @param atoms An array of atomized access points.
-     * @return The most relevant matching place or null if no matches are found.
+     * @return The most relevant matching places or null if no matches are found.
      */
-    public static Place reconcile(PlaceIndex index, String[] atoms) {
+    public static Set<Place> reconcile(PlaceIndex index, String[] atoms) {
         List<Set<Place>> candidates = new ArrayList<Set<Place>>();
 
         // iterate through valid atoms
         for (String atom : atoms) {
-            if (ACRO_PATTERN.matcher(atom).matches()) continue;
-            if (STOPWORDS.contains(PlaceIndex.normalizeName(atom))) continue;
+            if (atom == null) continue;
 
             // get matches for atom
             Set<Place> matches = index.get(atom);
             if (matches == null) continue;
+            int maxNumAncestors = -1;
 
             // iterate through valid matches
             for (Place match : matches) {
@@ -217,9 +238,8 @@ public class Reconciler {
 
                 // iterate through other valid atoms
                 for (String otherAtom : atoms) {
+                    if (otherAtom == null) continue;
                     if (otherAtom == atom) continue;
-                    if (ACRO_PATTERN.matcher(otherAtom).matches()) continue;
-                    if (STOPWORDS.contains(PlaceIndex.normalizeName(otherAtom))) continue;
 
                     // get matches for other atom
                     Set<Place> otherMatches = index.get(otherAtom);
@@ -234,6 +254,10 @@ public class Reconciler {
                     }
                 }
 
+                // skip if this atom already has a match with this many or more ancestors
+                if (maxNumAncestors >= numAncestors) continue;
+                maxNumAncestors = numAncestors;
+
                 // extend candidate list if necessary
                 while (candidates.size() <= numAncestors) {
                     candidates.add(new TreeSet<Place>());
@@ -247,7 +271,7 @@ public class Reconciler {
         // return null if there are no matches for any atom
         if (candidates.isEmpty()) return null;
 
-        // return the first match with the most ancestors
-        return candidates.get(candidates.size() - 1).iterator().next();
+        // return the matches with the most ancestors
+        return candidates.get(candidates.size() - 1);
     }
 }

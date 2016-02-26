@@ -5,6 +5,7 @@ import com.ontotext.ehri.georecon.place.PlaceIndex;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -46,11 +47,19 @@ public class Demo {
             // reconcile user input
             while (! (input = scanner.nextLine().trim()).equals(CMD_QUIT)) {
                 String[] atoms = Reconciler.LIST_SPLITTER.split(input);
-                Place recon = Reconciler.reconcile(index, atoms);
+                Set<Place> recons = Reconciler.reconcile(index, atoms);
 
                 // print result from reconciliation if any
-                if (recon == null) System.out.println("Not found.");
-                else System.out.println(recon.toString());
+                if (recons == null) {
+                    System.out.println("Not found.");
+                } else {
+
+                    for (Place recon : recons) {
+                        System.out.print(recon.toString() + " ");
+                    }
+
+                    System.out.println();
+                }
 
                 // for each atom, get all matches in order of relevance
                 for (String atom : atoms) {
