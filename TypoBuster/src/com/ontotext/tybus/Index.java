@@ -30,10 +30,10 @@ public class Index implements Serializable {
     private static final int MIN_LENGTH = 5;
 
     // minimum frequency of correction
-    private static final int MIN_CORRECTION_FREQUENCY = 2;
+    private static final int MIN_CORRECTION_FREQUENCY = 20;
 
     // typo-frequency to correction-frequency ratio
-    private static final float TYPO_FREQUENCY_RATIO = 0.5f;
+    private static final float TYPO_FREQUENCY_RATIO = 0.05f;
 
     private Map<String, String> typo2correction;
 
