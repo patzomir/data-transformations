@@ -30,10 +30,13 @@ public class Index implements Serializable {
     private static final int MIN_LENGTH = 5;
 
     // minimum frequency of correction
-    private static final int MIN_CORRECTION_FREQUENCY = 20;
+    private static final int MIN_CORRECTION_FREQUENCY = 10;
+
+    // absolute maximum frequency of typo
+    private static final int MAX_TYPO_FREQUENCY = 10;
 
     // typo-frequency to correction-frequency ratio
-    private static final float TYPO_FREQUENCY_RATIO = 0.05f;
+    private static final float TYPO_FREQUENCY_RATIO = 0.1f;
 
     private Map<String, String> typo2correction;
 
@@ -56,8 +59,9 @@ public class Index implements Serializable {
                 int correctionFrequency = correctionToken.getNumOccurrences();
                 if (correctionFrequency < MIN_CORRECTION_FREQUENCY) break;
 
-                // calculate the maximum typo frequency
+                // calculate the relative maximum typo frequency
                 int maxTypoFrequency = Math.round(TYPO_FREQUENCY_RATIO * correctionFrequency);
+                maxTypoFrequency = Math.min(maxTypoFrequency, MAX_TYPO_FREQUENCY);
                 String correction = correctionToken.getContent();
 
                 // find same-length typos
