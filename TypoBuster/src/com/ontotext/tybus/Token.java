@@ -35,6 +35,10 @@ public class Token implements Comparable<Token>, Serializable {
 
     @Override
     public int compareTo(Token other) {
+        if (this == other) return 0;
+
+        if (numOccurrences < other.numOccurrences) return -1;
+        if (numOccurrences > other.numOccurrences) return 1;
         return content.compareTo(other.content);
     }
 
@@ -44,12 +48,15 @@ public class Token implements Comparable<Token>, Serializable {
         if (other == null || getClass() != other.getClass()) return false;
 
         Token token = (Token) other;
+        if (numOccurrences != token.numOccurrences) return false;
         return content.equals(token.content);
     }
 
     @Override
     public int hashCode() {
-        return content.hashCode();
+        int result = content.hashCode();
+        result = 31 * result + numOccurrences;
+        return result;
     }
 
     @Override

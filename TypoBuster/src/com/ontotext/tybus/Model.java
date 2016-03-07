@@ -1,12 +1,7 @@
 package com.ontotext.tybus;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * A model stores tokens extracted from texts.
@@ -39,11 +34,12 @@ public class Model implements Serializable {
 
             // extend list if necessary
             while (length2tokens.size() < length) {
-                length2tokens.add(new TreeSet<>(new FrequencyComparator()));
+                length2tokens.add(new TreeSet<>());
             }
 
             // token is known
         } else {
+            length2tokens.get(length - 1).remove(token);
             token.addOccurrence();
         }
 
