@@ -27,10 +27,10 @@ public class Index implements Serializable {
     private static final int DEFAULT_NUM_CORRECTIONS = 1;
 
     // minimum length of correction or typo
-    private static final int MIN_LENGTH = 4;
+    private static final int MIN_LENGTH = 5;
 
     // minimum frequency of correction
-    private static final int MIN_CORRECTION_FREQUENCY = 4;
+    private static final int MIN_CORRECTION_FREQUENCY = 2;
 
     // typo-frequency to correction-frequency ratio
     private static final float TYPO_FREQUENCY_RATIO = 0.5f;
