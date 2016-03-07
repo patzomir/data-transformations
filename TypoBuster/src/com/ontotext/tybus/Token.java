@@ -54,6 +54,6 @@ public class Token implements Comparable<Token>, Serializable {
 
     @Override
     public String toString() {
-        return "\"" + content + "\" (" + numOccurrences + ")";
+        return numOccurrences + " \"" + content + "\"";
     }
 }

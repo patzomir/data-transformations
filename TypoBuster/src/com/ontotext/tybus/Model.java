@@ -67,4 +67,15 @@ public class Model implements Serializable {
     public int maxTokenLength() {
         return length2tokens.size();
     }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (Token token : string2token.values()) {
+            stringBuilder.append(token.toString() + "\n");
+        }
+
+        return stringBuilder.toString();
+    }
 }

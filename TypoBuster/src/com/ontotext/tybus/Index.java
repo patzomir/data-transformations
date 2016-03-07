@@ -246,4 +246,16 @@ public class Index implements Serializable {
 
         return maxLength;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (String typo : typo2correction.keySet()) {
+            String correction = typo2correction.get(typo);
+            stringBuilder.append("\"" + typo + "\" => \"" + correction + "\"\n");
+        }
+
+        return stringBuilder.toString();
+    }
 }
