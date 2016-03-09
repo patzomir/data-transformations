@@ -5,8 +5,19 @@ import com.ontotext.ehri.georecon.place.PlaceIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 /**
@@ -147,7 +158,7 @@ public class Reconciler {
                     }
 
                     // reconcile atoms
-                    Set<Place> places = reconcile(index, atoms, false);
+                    SortedSet<Place> places = reconcile(index, atoms, false);
                     StringBuilder result = new StringBuilder();
 
                     // collect result
@@ -222,16 +233,17 @@ public class Reconciler {
      * @param atoms An array of atomized access points.
      * @return The most relevant matching places or null if no matches are found.
      */
-    public static Set<Place> reconcile(PlaceIndex index, String[] atoms) {
+    @Deprecated
+    public static SortedSet<Place> reconcile(PlaceIndex index, String[] atoms) {
         if (atoms == null) return null;
-        List<Set<Place>> candidates = new ArrayList<Set<Place>>();
+        List<SortedSet<Place>> candidates = new ArrayList<SortedSet<Place>>();
 
         // iterate through valid atoms
         for (String atom : atoms) {
             if (atom == null) continue;
 
             // get matches for atom
-            Set<Place> matches = index.get(atom);
+            SortedSet<Place> matches = index.get(atom);
             if (matches == null) continue;
             int maxNumAncestors = -1;
 
@@ -246,11 +258,14 @@ public class Reconciler {
                     if (otherAtom == atom) continue;
 
                     // get matches for other atom
-                    Set<Place> otherMatches = index.get(otherAtom);
+                    SortedSet<Place> otherMatches = index.get(otherAtom);
                     if (otherMatches == null) continue;
 
-                    // check if at least one of the matches is an ancestor
+                    // iterate through valid matches of other atom
                     for (Place otherMatch : otherMatches) {
+                        if (STOPFEATS.contains(otherMatch.getFeature())) continue;
+
+                        // check if at least one of the matches of the other atom is ancestor
                         if (match.isDescendantOf(otherMatch)) {
                             numAncestors++;
                             break;
@@ -283,29 +298,28 @@ public class Reconciler {
      * Lookup places from an array of atomized access points and return the most relevant places.
      * @param index The lookup index to use.
      * @param atoms An array of atomized access points.
-     * @param includeAncestors Control whether to include ancestor atoms.
+     * @param keepAncestors Do you want to keep ancestors or not?
      * @return The most relevant matching places or null if no matches are found.
      */
-    public static SortedSet<Place> reconcile(PlaceIndex index, String[] atoms, boolean includeAncestors) {
+    public static SortedSet<Place> reconcile(PlaceIndex index, String[] atoms, boolean keepAncestors) {
         if (atoms == null) return null;
-        Map<String, Place> atom2place = new HashMap<String, Place>();
-        Set<String> ancestorAtoms = new HashSet<String>();
+        SortedSet<Place> bestMatches = new TreeSet<Place>();
 
         // iterate through valid atoms
         for (String atom : atoms) {
             if (atom == null) continue;
 
             // get matches for atom
-            Set<Place> matches = index.get(atom);
+            SortedSet<Place> matches = index.get(atom);
             if (matches == null) continue;
 
+            // map from number of ancestors to sets of matches
             List<SortedSet<Place>> numAncestors2matches = new ArrayList<SortedSet<Place>>();
-            Map<Place, Set<String>> match2ancestorAtoms = new HashMap<Place, Set<String>>();
 
             // iterate through valid matches
             for (Place match : matches) {
                 if (STOPFEATS.contains(match.getFeature())) continue;
-                Set<String> matchAncestorAtoms = new HashSet<String>();
+                int numAncestors = 0;
 
                 // iterate through other valid atoms
                 for (String otherAtom : atoms) {
@@ -313,48 +327,64 @@ public class Reconciler {
                     if (otherAtom == atom) continue;
 
                     // get matches for other atom
-                    Set<Place> otherMatches = index.get(otherAtom);
+                    SortedSet<Place> otherMatches = index.get(otherAtom);
                     if (otherMatches == null) continue;
 
-                    // check if at least one of the matches is an ancestor
+                    // iterate through valid matches of other atom
                     for (Place otherMatch : otherMatches) {
+                        if (STOPFEATS.contains(otherMatch.getFeature())) continue;
+
+                        // check if at least one of the matches of the other atom is ancestor
                         if (match.isDescendantOf(otherMatch)) {
-                            matchAncestorAtoms.add(otherAtom);
+                            numAncestors++;
                             break;
                         }
                     }
                 }
 
-                // map match to its ancestor atoms
-                match2ancestorAtoms.put(match, matchAncestorAtoms);
-
                 // extend list if necessary
-                while (numAncestors2matches.size() <= matchAncestorAtoms.size()) {
+                while (numAncestors2matches.size() <= numAncestors) {
                     numAncestors2matches.add(new TreeSet<Place>());
                 }
 
-                // add match to set of matches with so many ancestors
-                numAncestors2matches.get(matchAncestorAtoms.size()).add(match);
+                // add match to the set of matches with so many ancestors
+                numAncestors2matches.get(numAncestors).add(match);
             }
 
-            // add ancestor atoms of best match and map atom
+            // possible if all matches of atom have stop-feature
             if (numAncestors2matches.isEmpty()) continue;
-            Place bestMatch = numAncestors2matches.get(numAncestors2matches.size() - 1).iterator().next();
-            ancestorAtoms.addAll(match2ancestorAtoms.get(bestMatch));
-            atom2place.put(atom, bestMatch);
+
+            // add best match of atom
+            bestMatches.add(numAncestors2matches.get(numAncestors2matches.size() - 1).iterator().next());
         }
 
-        // populate result set
-        SortedSet<Place> result = new TreeSet<Place>();
-        for (String atom : atoms) {
-            if (atom == null) continue;
-            if (! includeAncestors && ancestorAtoms.contains(atom)) continue;
+        // return null if there are no valid matches
+        if (bestMatches.isEmpty()) return null;
 
-            Place place = atom2place.get(atom);
-            if (place != null) result.add(place);
+        // return all best matches if ancestors are to be kept
+        if (keepAncestors) return bestMatches;
+        SortedSet<Place> bestMatchesNoAncestors = new TreeSet<Place>();
+
+        // iterate through best matches
+        for (Place match : bestMatches) {
+            boolean isAncestor = false;
+
+            // iterate through other best matches
+            for (Place otherMatch : bestMatches) {
+                if (otherMatch == match) continue;
+
+                // check if at least one other best match is descendant
+                if (otherMatch.isDescendantOf(match)) {
+                    isAncestor = true;
+                    break;
+                }
+            }
+
+            // skip ancestor matches
+            if (isAncestor) continue;
+            bestMatchesNoAncestors.add(match);
         }
 
-        if (result.isEmpty()) return null;
-        return result;
+        return bestMatchesNoAncestors;
     }
 }

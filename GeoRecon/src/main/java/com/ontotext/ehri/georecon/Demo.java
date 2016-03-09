@@ -5,9 +5,8 @@ import com.ontotext.ehri.georecon.place.PlaceIndex;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Scanner;
-import java.util.Set;
+import java.util.SortedSet;
 
 /**
  * Demonstrate the GeoNames reconciler.
@@ -47,7 +46,7 @@ public class Demo {
             // reconcile user input
             while (! (input = scanner.nextLine().trim()).equals(CMD_QUIT)) {
                 String[] atoms = Reconciler.LIST_SPLITTER.split(input);
-                Set<Place> recons = Reconciler.reconcile(index, atoms);
+                SortedSet<Place> recons = Reconciler.reconcile(index, atoms);
 
                 // print result from reconciliation if any
                 if (recons == null) {
@@ -63,7 +62,7 @@ public class Demo {
 
                 // for each atom, get all matches in order of relevance
                 for (String atom : atoms) {
-                    Set<Place> matches = index.get(atom);
+                    SortedSet<Place> matches = index.get(atom);
                     if (matches == null) continue;
 
                     // print some additional information

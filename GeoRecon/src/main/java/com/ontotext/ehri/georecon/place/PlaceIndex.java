@@ -1,10 +1,10 @@
 package com.ontotext.ehri.georecon.place;
 
-import java.io.*;
+import java.io.Serializable;
 import java.text.Normalizer;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
@@ -20,13 +20,13 @@ public class PlaceIndex implements Serializable {
     private static final Pattern SPACE_SEQ = Pattern.compile("\\s+");
 
     // map from names to places
-    private Map<String, Set<Place>> index;
+    private Map<String, SortedSet<Place>> index;
 
     /**
      * Construct an empty place index.
      */
     public PlaceIndex() {
-        index = new HashMap<String, Set<Place>>();
+        index = new HashMap<String, SortedSet<Place>>();
     }
 
     /**
@@ -38,7 +38,7 @@ public class PlaceIndex implements Serializable {
         name = normalizeName(name);
 
         // retrieve set of places for this name
-        Set<Place> places = index.get(name);
+        SortedSet<Place> places = index.get(name);
         if (places == null) places = new TreeSet<Place>();
 
         // add place to set of places for this name
@@ -51,7 +51,7 @@ public class PlaceIndex implements Serializable {
      * @param name The name of the places.
      * @return The set of places with this name, or null if there are no places with this name.
      */
-    public Set<Place> get(String name) {
+    public SortedSet<Place> get(String name) {
         name = normalizeName(name);
         return index.get(name);
     }
@@ -62,7 +62,7 @@ public class PlaceIndex implements Serializable {
      * @return The most relevant place with this name, or null if there are no places with this name.
      */
     public Place getOne(String name) {
-        Set<Place> matches = get(name);
+        SortedSet<Place> matches = get(name);
         if (matches == null) return null;
         return matches.iterator().next();
     }
