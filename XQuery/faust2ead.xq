@@ -1,9 +1,11 @@
 xquery version "3.0";
 
-declare function local:transform-faust($main as xs:string, $xtra as xs:string, $mapp as xs:string) as element()* {
-    let $root := doc($main)/root
+declare function local:transform-faust($main as document-node(), $xtra as document-node(), $mapp as document-node()) as element()* {
+    let $root := $main/root
 
     for $collection in $root/collection
+    let $sig := $collection//FAUST-Objekt/ED/FAUSTObjekt/Signatur/text()
+    let $xtra_info := local:get-xtra-info($sig[1], $xtra, $mapp)
     return <ead xmlns="urn:isbn:1-931666-22-9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xlink="http://www.w3.org/1999/xlink" audience="external" xsi:schemaLocation="urn:isbn:1-931666-22-9 http://www.loc.gov/ead/ead.xsd">
         { local:generate-header() }
         <archdesc level="recordgrp">
@@ -21,16 +23,23 @@ declare function local:transform-faust($main as xs:string, $xtra as xs:string, $
             </processinfo>
             <dsc>
                 <c01 level="series">
-                    {
                         <did>
                             <unittitle encodinganalog="collection_Titel">{ data($collection/collection_Titel) }</unittitle>
-                        </did>,
-                        local:transform-collections($collection, 2)
-                    }
+                        </did>
+                    <bioghist encodinganalog="Vita">
+                        <p>{ data($xtra_info/*:FAUST-Objekt/*:Vita) (: TODO: fix this :) }</p>
+                    </bioghist>
+                    { local:transform-collections($collection, 2) }
                 </c01>
             </dsc>
         </archdesc>
     </ead>
+};
+
+declare function local:get-xtra-info($sig as xs:string, $xtra as document-node(), $mapp as document-node()) as element()? {
+    let $mapping := $mapp/table/row[./value[1]/text() = concat($sig, " / 1 -")]/value[2]/text()
+    let $xtra_info := $xtra/ED/FAUST-Objekt[./Weitere_Bestandsangaben/text() = concat("Objekt ", $mapping, " / ED")]
+    return $xtra_info
 };
 
 declare function local:generate-header() as element() {
@@ -126,6 +135,6 @@ let $output_pre := "ead_"
 let $output_suf := ".xml"
 let $num_zeroes := 4
 
-for $ead at $count in local:transform-faust($input_main, $input_xtra, $input_mapp)
+for $ead at $count in local:transform-faust(doc($input_main), doc($input_xtra), doc($input_mapp))
 let $file := concat($output_dir, $output_pre, local:pad-with-zeroes(string($count), $num_zeroes), $output_suf)
 return file:write($file, $ead, $params)
