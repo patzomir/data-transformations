@@ -31,6 +31,8 @@ declare function local:transform-faust($main as document-node(), $xtra as docume
                 <c01 level="series">
                     <did>
                         <unitid label="ehri_structure">{ $struc }</unitid>
+                        <unitid label="ehri_main_identifier">{ $sig[1] }</unitid>
+                        <unitid encodinganalog="Signatur" identifier="Ref">{ $sig[1] }</unitid>
                         <unittitle encodinganalog="collection_Titel">{ data($collection/*:collection_Titel) }</unittitle>
                     </did>
                     <bioghist encodinganalog="Vita">
@@ -42,7 +44,10 @@ declare function local:transform-faust($main as document-node(), $xtra as docume
                     <accessrestrict encodinganalog="Bestandsnutzung">
                         <p>{ data($xtra_info/*:Bestandsnutzung) }</p>
                     </accessrestrict>
-                    { local:transform-collections($collection, 2, $struc) }
+                    {
+                        local:transform-collections($collection, 2, $struc),
+                        local:transform-faustobjekte($collection, 2, $struc)
+                    }
                 </c01>
             </dsc>
         </archdesc>
@@ -102,10 +107,11 @@ declare function local:transform-collections($parent as element(), $level as xs:
         attribute level { "series" },
         <did>
             <unitid label="ehri_structure">{ $struc }</unitid>
+            <unitid label="ehri_main_identifier">NL_{ $struc }</unitid>
             <unittitle encodinganalog="collection_Titel">{ data($collection/collection_Titel) }</unittitle>
         </did>,
-        local:transform-faustobjekte($collection, $level + 1, $struc),
-        local:transform-collections($collection, $level + 1, $struc)
+        local:transform-collections($collection, $level + 1, $struc),
+        local:transform-faustobjekte($collection, $level + 1, $struc)
     }
 };
 
