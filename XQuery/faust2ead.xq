@@ -9,6 +9,7 @@ declare function local:transform-faust($main as document-node(), $xtra as docume
     let $root_struc := "1"
 
     for $collection at $count in $root/collection
+    let $id := count($root/collection[position() < $count] | $root/collection[position() < $count]//collection | $root/collection[position() < $count]//FAUST-Objekt) + 1
     let $struc := concat($root_struc, ".", string($count))
     let $sig := $collection//FAUST-Objekt/ED/FAUSTObjekt/Signatur/text()
     let $xtra_info := local:get-xtra-info($sig[1], $xtra, $mapp)
@@ -30,6 +31,7 @@ declare function local:transform-faust($main as document-node(), $xtra as docume
             <dsc>
                 <c01 level="series">
                     <did>
+                        <unitid label="ehri_internal_id">{ $id }</unitid>
                         <unitid label="ehri_structure">{ $struc }</unitid>
                         <unitid label="ehri_main_identifier">{ $sig[1] }</unitid>
                         <unitid encodinganalog="Signatur" identifier="Ref">{ $sig[1] }</unitid>
@@ -45,8 +47,8 @@ declare function local:transform-faust($main as document-node(), $xtra as docume
                         <p>{ data($xtra_info/*:Bestandsnutzung) }</p>
                     </accessrestrict>
                     {
-                        local:transform-collections($collection, 2, $struc),
-                        local:transform-faustobjekte($collection, 2, $struc)
+                        local:transform-faustobjekte($collection, 2, $struc, $id),
+                        local:transform-collections($collection, 2, $struc, $id)
                     }
                 </c01>
             </dsc>
@@ -98,32 +100,36 @@ declare function local:generate-header() as element() {
 
 
 (: recursively transform all <collection> elements in a given element :)
-declare function local:transform-collections($parent as element(), $level as xs:integer, $parent_struc as xs:string) as element()* {
+declare function local:transform-collections($parent as element(), $level as xs:integer, $parent_struc as xs:string, $parent_id as xs:integer) as element()* {
     let $tag := concat("c", local:pad-with-zeroes(string($level), 2))
 
     for $collection at $count in $parent/collection
+    let $id := count($parent/collection[position() < $count] | $parent/collection[position() < $count]//collection | $parent/collection[position() < $count]//FAUST-Objekt) + $parent_id + 1
     let $struc := concat($parent_struc, ".", string($count))
     return element { $tag } {
         attribute level { "series" },
         <did>
+            <unitid label="ehri_internal_id">{ $id }</unitid>
             <unitid label="ehri_structure">{ $struc }</unitid>
             <unitid label="ehri_main_identifier">NL_{ $struc }</unitid>
             <unittitle encodinganalog="collection_Titel">{ data($collection/collection_Titel) }</unittitle>
         </did>,
-        local:transform-collections($collection, $level + 1, $struc),
-        local:transform-faustobjekte($collection, $level + 1, $struc)
+        local:transform-faustobjekte($collection, $level + 1, $struc, $id),
+        local:transform-collections($collection, $level + 1, $struc, $id)
     }
 };
 
 (: transform all <FAUST-Objekt> elements in a given element :)
-declare function local:transform-faustobjekte($parent as element(), $level as xs:integer, $parent_struc as xs:string) as element()* {
+declare function local:transform-faustobjekte($parent as element(), $level as xs:integer, $parent_struc as xs:string, $parent_id as xs:integer) as element()* {
     let $tag := concat("c", local:pad-with-zeroes(string($level), 2))
 
     for $faustobjekt at $count in $parent/FAUST-Objekt
+    let $id := count($parent/FAUST-Objekt[position() < $count]) + $parent_id + 1
     let $struc := concat($parent_struc, ".", string($count))
     return element { $tag } {
         attribute level { "file" },
         <did>
+            <unitid label="ehri_internal_id">{ $id }</unitid>
             <unitid label="ehri_structure">{ $struc }</unitid>
             <unitid label="ehri_main_identifier">{ data($faustobjekt/ED/FAUSTObjekt/Signatur) } / { data($faustobjekt/ED/FAUSTObjekt/Bandnummer) }</unitid>
             <unitid encodinganalog="Signatur" identifier="{ data($faustobjekt/ED/FAUSTObjekt/Ref) }">{ data($faustobjekt/ED/FAUSTObjekt/Signatur) } / { data($faustobjekt/ED/FAUSTObjekt/Bandnummer) }</unitid>
