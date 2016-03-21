@@ -57,7 +57,7 @@ declare function local:get-xtra-info($faust-xtra as document-node(), $ref as xs:
 };
 
 declare function local:transform-file($file as element(), $faust-xtra as document-node(), $struc as xs:string) as element() {
-    let $file := $file/ED/FAUSTObjekt
+    let $file := fn:exactly-one($file/ED/FAUSTObjekt)
     let $xtra-info := local:get-xtra-info($faust-xtra, $file/Ref/text())
     return element { local:struc2tag($struc) } {
         attribute level {"file"},
@@ -71,8 +71,12 @@ declare function local:transform-file($file as element(), $faust-xtra as documen
                 then <unitdate normal="{ fn:replace($date-range, "-", "/") }">{ $date-range }</unitdate>
                 else (),
 
+                local:wrap-each("unitdate", $file/Datierungsangaben/text()),
                 local:wrap-each("unittitle", $file/Titel/text()),
                 local:wrap-each("unittitle", $file/Untertitel/text()),
+                local:wrap-each("unittitle", $file/Bestand/text()),
+                local:wrap-all("unittitle", (
+                    local:wrap-each("occupation", $file/Beruf/text()))),
                 local:wrap-all("abstract", (
                     local:wrap-each("p", $file/Bestandskurzbeschreibung/text()))),
                 local:wrap-all("origination", (
