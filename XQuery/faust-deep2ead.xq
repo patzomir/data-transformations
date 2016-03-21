@@ -38,7 +38,6 @@ declare function local:gen-header() as element() {
         <eadid countrycode="DE">NL</eadid>
         <filedesc>
             <titlestmt>
-                <titleproper/>
                 <author>IfZ</author>
             </titlestmt>
         </filedesc>
@@ -48,7 +47,6 @@ declare function local:gen-header() as element() {
                 <language scriptcode="Latn" langcode="ger">German</language>
             </langusage>
         </profiledesc>
-        <revisiondesc/>
     </eadheader>
 };
 
@@ -68,7 +66,11 @@ declare function local:transform-file($file as element(), $faust-xtra as documen
             <unitid label="ehri_main_identifier" identifier="{ $file/Ref/text() }">{ $file/Signatur/text() } / { $file/Bandnummer/text() }, { $file/Ref/text() }</unitid>
             <unitid label="ehri_structure">{$struc}</unitid>
             {
-                local:wrap-each("unitdate", fn:string-join((fn:zero-or-one($file/LaufzeitBeginn/text()), fn:zero-or-one($file/LaufzeitEnde/text())), "-")),
+                let $date-range := fn:string-join((fn:zero-or-one($file/LaufzeitBeginn/text()), fn:zero-or-one($file/LaufzeitEnde/text())), "-")
+                return if (fn:string-length($date-range) > 0)
+                then <unitdate normal="{ fn:replace($date-range, "-", "/") }">{ $date-range }</unitdate>
+                else (),
+
                 local:wrap-each("unittitle", $file/Titel/text()),
                 local:wrap-each("unittitle", $file/Untertitel/text()),
                 local:wrap-all("abstract", (
