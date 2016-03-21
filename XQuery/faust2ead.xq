@@ -9,12 +9,21 @@ declare function local:pad-with-zeroes($number as xs:string, $length as xs:integ
     else local:pad-with-zeroes(fn:concat("0", $number), $length)
 };
 
-(: generate a sequence of elements :)
-(: - $values: the sequence of corresponding values :)
-(: - tag: the tag of the elements to generate :)
-declare function local:gen-elements($values as xs:string*, $tag as xs:string) as element()* {
-    for $value in $values
-    return element { $tag } { $value }
+(: generate a sequence of elements, wrapping each child with the given tag :)
+(: - $tag: the tag of the elements to generate as string :)
+(: - $children: a sequence of children (e.g. text nodes or other element nodes) :)
+declare function local:wrap-each($tag as xs:string, $children as item()*) as element()* {
+    for $child in $children
+    return element { $tag } { $child }
+};
+
+(: generate a sequence of elements, wrapping all children with the given tag :)
+(: - $tag: the tag of the elements to generate as string :)
+(: - $children: a sequence of children (e.g. text nodes or other element nodes) :)
+declare function local:wrap-all($tag as xs:string, $children as item()*) as element()? {
+    if (fn:empty($children))
+    then ()
+    else element { $tag } { $children }
 };
 
 (: generate an EAD header element :)
@@ -51,40 +60,35 @@ declare function local:transform-file($faust-main as document-node(), $faust-xtr
         <did>
             <unitid label="ehri_main_identifier" identifier="{ $ref }">{ $sign } / { $tome }, { $ref }</unitid>
             <unitid label="ehri_structure">{ $struc }</unitid>
-            { local:gen-elements(fn:string-join((fn:zero-or-one($file/Laufzeit-Beginn/text()), fn:zero-or-one($file/Laufzeit-Ende/text())), "-"), "unitdate") }
-            { local:gen-elements($file/Titel/text(), "unittitle") }
-            { local:gen-elements($file/Untertitel/text(), "unittitle") }
-            <abstract>
-                { local:gen-elements($file/Bestandskurzbeschreibung/text(), "p") }
-            </abstract>
-            <origination>
-                { local:gen-elements($file/Autor/text(), "persname") }
-            </origination>
-            <physdesc>
-                { local:gen-elements($file/Umfang/text(), "dimensions") }
-            </physdesc>
+            {
+                local:wrap-each("unitdate", fn:string-join((fn:zero-or-one($file/Laufzeit-Beginn/text()), fn:zero-or-one($file/Laufzeit-Ende/text())), "-")),
+                local:wrap-each("unittitle", $file/Titel/text()),
+                local:wrap-each("unittitle", $file/Untertitel/text()),
+                local:wrap-all("abstract", (
+                    local:wrap-each("p", $file/Bestandskurzbeschreibung/text()))),
+                local:wrap-all("origination", (
+                    local:wrap-each("persname", $file/Autor/text()))),
+                local:wrap-all("physdesc", (
+                    local:wrap-each("dimensions", $file/Umfang/text())))
+            }
         </did>
-        <bioghist>
-            { local:gen-elements($xtra-info/Vita/text(), "p") }
-        </bioghist>
-        <scopecontent>
-            { local:gen-elements($xtra-info/Zum_Bestand/text(), "p") }
-            { local:gen-elements($file/Enthalt/text(), "p") }
-            { local:gen-elements($file/Darin_auch/text(), "p") }
-        </scopecontent>
-        <accessrestrict>
-            { local:gen-elements($xtra-info/Bestandsnutzung/text(), "p") }
-        </accessrestrict>
-        <altformavail>
-            { local:gen-elements($file/Digitalisierung/text(), "p") }
-            { local:gen-elements($file/Internetadresse/text(), "p") }
-            { local:gen-elements($file/Online_Prasentation/text(), "p") }
-        </altformavail>
-        <controlaccess>
-            { local:gen-elements(fn:tokenize($file/Personenregister/text(), ";\s*"), "persname") }
-            { local:gen-elements(fn:tokenize($file/Sachregister/text(), ";\s*"), "subject") }
-            { local:gen-elements($file/Thesaurus/text(), "subject") }
-        </controlaccess>
+        {
+            local:wrap-all("bioghist", local:wrap-each("p", $xtra-info/Vita/text())),
+            local:wrap-all("scopecontent", (
+                local:wrap-each("p", $xtra-info/Zum_Bestand/text()),
+                local:wrap-each("p", $file/Enthalt/text()),
+                local:wrap-each("p", $file/Darin_auch/text()))),
+            local:wrap-all("accessrestrict", (
+                local:wrap-each("p", $xtra-info/Bestandsnutzung/text()))),
+            local:wrap-all("altformavail", (
+                local:wrap-each("p", $file/Digitalisierung/text()),
+                local:wrap-each("p", $file/Internetadresse/text()),
+                local:wrap-each("p", $file/Online_Prasentation/text()))),
+            local:wrap-all("controlaccess", (
+                local:wrap-each("persname", fn:tokenize($file/Personenregister/text(), ";\s*")),
+                local:wrap-each("subject", fn:tokenize($file/Sachregister/text(), ";\s*")),
+                local:wrap-each("subject", $file/Thesaurus/text())))
+        }
     </c03>
 };
 
