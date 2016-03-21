@@ -133,7 +133,12 @@ declare function local:transform-recordgroup($recordgroup as element(), $faust-x
             {
                 for $series at $pos-ser in $recordgroup/collection
                 let $struc-ser := fn:concat($struc, ".", fn:string($pos-ser))
-                return local:transform-series($series, $faust-xtra, $struc-ser)
+                return local:transform-series($series, $faust-xtra, $struc-ser),
+
+                let $num-ser := fn:count($recordgroup/collection)
+                for $file at $pos-file in $recordgroup/FAUST-Objekt
+                let $struc-file := fn:concat($struc, ".", fn:string($num-ser + $pos-file))
+                return local:transform-file($file, $faust-xtra, $struc-file)
             }
         </dsc>
     </archdesc>
