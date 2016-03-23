@@ -3,6 +3,11 @@ xquery version "3.0";
 import module namespace shared = "shared" at "shared.xq";
 import module namespace shared-faust = "shared-faust" at "shared-faust.xq";
 
+(: arguments bound to external variables by BaseX :)
+declare variable $arg1 as xs:string external;
+declare variable $arg2 as xs:string external;
+declare variable $arg3 as xs:string external;
+
 (: generate a component tag based on its structure string :)
 declare function local:struc2tag($struc as xs:string) as xs:string {
     let $level := fn:string-length(fn:replace($struc, "[^\.]", ""))
@@ -115,14 +120,14 @@ declare function local:transform($input-main as document-node(), $input-xtra as 
     </ead>
 };
 
-(: serialization parameters :)
+(: parameters :)
 let $ser-params := map { "omit-xml-declaration": "no" }
 let $pad-length := 4
 
 (: file locations :)
-let $input-main := "/home/georgi/IdeaProjects/TestBaseX/data/faust-input/xport-main-deep.xml"
-let $input-xtra := "/home/georgi/IdeaProjects/TestBaseX/data/faust-input/xport-xtra.xml"
-let $output-dir := "/home/georgi/IdeaProjects/TestBaseX/data/faust-output/"
+let $input-main := $arg1
+let $input-xtra := $arg2
+let $output-dir := $arg3
 
 (: transform input and write output :)
 for $ead at $pos-ead in local:transform(fn:doc($input-main), fn:doc($input-xtra))

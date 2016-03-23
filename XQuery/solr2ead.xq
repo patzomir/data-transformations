@@ -2,6 +2,10 @@ xquery version "3.0";
 
 import module namespace shared = "shared" at "shared.xq";
 
+(: arguments bound to external variables by BaseX :)
+declare variable $arg1 as xs:string external;
+declare variable $arg2 as xs:string external;
+
 (: generate an EAD header element :)
 declare function local:gen-header() as element() {
     <eadheader countryencoding="iso3166-1" dateencoding="iso8601" langencoding="iso639-2b" repositoryencoding="iso15511" scriptencoding="iso15924">
@@ -73,8 +77,8 @@ let $ser-params := map { "omit-xml-declaration": "no" }
 let $pad-length := 4
 
 (: file locations :)
-let $input-main := "/home/georgi/IdeaProjects/TestBaseX/data/solr.xml"
-let $output-dir := "/home/georgi/IdeaProjects/TestBaseX/data/solr-output/"
+let $input-main := $arg1
+let $output-dir := $arg2
 
 (: transform input and write output :)
 for $ead at $pos-ead in local:transform(fn:doc($input-main))

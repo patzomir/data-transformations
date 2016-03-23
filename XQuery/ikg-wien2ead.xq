@@ -2,6 +2,11 @@ xquery version "3.0";
 
 import module namespace shared = "shared" at "shared.xq";
 
+(: arguments bound to external variables by BaseX :)
+declare variable $arg1 as xs:string external;
+declare variable $arg2 as xs:string external;
+declare variable $arg3 as xs:string external;
+
 (: generate an EAD header element :)
 declare function local:gen-header() as element() {
     <eadheader langencoding="iso639-2b" scriptencoding="iso15924" dateencoding="iso8601" countryencoding="iso3166-1" repositoryencoding="iso15511">
@@ -115,9 +120,9 @@ let $ser-params := map { "omit-xml-declaration": "no" }
 let $pad-length := 4
 
 (: file locations :)
-let $input-main := "/home/georgi/IdeaProjects/TestBaseX/data/wien-main.tsv"
-let $input-xtra := "/home/georgi/IdeaProjects/TestBaseX/data/wien-xtra.tsv"
-let $output-dir := "/home/georgi/IdeaProjects/TestBaseX/data/wien-output/"
+let $input-main := $arg1
+let $input-xtra := $arg2
+let $output-dir := $arg3
 
 (: transform input and write output :)
 let $input-main := csv:parse(file:read-text($input-main), $csv-params)

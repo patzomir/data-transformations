@@ -3,6 +3,11 @@ xquery version "3.0";
 import module namespace shared = "shared" at "shared.xq";
 import module namespace shared-faust = "shared-faust" at "shared-faust.xq";
 
+(: arguments bound to external variables by BaseX :)
+declare variable $arg1 as xs:string external;
+declare variable $arg2 as xs:string external;
+declare variable $arg3 as xs:string external;
+
 (: transform a single Faust object to a file-level component :)
 declare function local:transform-file($input-main as document-node(), $input-xtra as document-node(), $struc as xs:string, $sign as xs:string, $tome as xs:string, $ref as xs:string) as element() {
     let $file := fn:exactly-one($input-main/ED/FAUST-Objekt[Signatur/text() = $sign and Bandnummer/text() = $tome and Ref/text() = $ref])
@@ -106,14 +111,14 @@ declare function local:transform($input-main as document-node(), $input-xtra as 
     </ead>
 };
 
-(: serialization parameters :)
+(: parameters :)
 let $ser-params := map { "omit-xml-declaration": "no" }
 let $pad-length := 4
 
 (: file locations :)
-let $input-main := "/home/georgi/IdeaProjects/TestBaseX/data/faust-input/xport-main.xml"
-let $input-xtra := "/home/georgi/IdeaProjects/TestBaseX/data/faust-input/xport-xtra.xml"
-let $output-dir := "/home/georgi/IdeaProjects/TestBaseX/data/faust-output/"
+let $input-main := $arg1
+let $input-xtra := $arg2
+let $output-dir := $arg3
 
 (: transform input and write output :)
 for $ead at $pos-ead in local:transform(fn:doc($input-main), fn:doc($input-xtra))
