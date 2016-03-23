@@ -25,18 +25,19 @@ declare function local:get-values($record as element(), $field as xs:string) as 
     return fn:tokenize(fn:replace($text, ";$", ""), "(;|\s+// \*/)\s+")
 };
 
-declare function local:get-xtra-info($input-xtra as document-node(), $call-number as xs:string, $type as xs:string, $field as xs:string) as xs:string* {
-    $input-xtra/csv/record[./entry[@name = "Call number"]/text() = $call-number and ./entry[@name = "Type"]/text() = $type]/entry[@name = $field]/text()
+declare function local:get-xtra-info($input-xtra as document-node(), $call-number as xs:string) as element()* {
+    $input-xtra/csv/record[./entry[@name = "Call number"]/text() = $call-number]
 };
 
 declare function local:transform-file($file as element(), $input-xtra as document-node()) as element() {
     let $call-number := fn:exactly-one(local:get-values($file, "Call number"))
+    let $xtra := local:get-xtra-info($input-xtra, $call-number)
     return <c01 level="file">
         <did>
             {
                 shared:wrap-each("unitid", map { "label": "callnumber" }, $call-number),
                 shared:wrap-each("unitid", map { "label": "previousIdentifier" }, local:get-values($file, "Earlier call numbers")),
-                shared:wrap-each("unitdate", local:get-xtra-info($input-xtra, $call-number, "DATE", "Text")),
+                shared:wrap-each("unitdate", $xtra[./entry[@name = "Type"]/text() = "DATE"]/entry[@name = "Text"]/text()),
                 shared:wrap-each("unittitle", local:get-values($file, "Title")),
                 shared:wrap-all("physdesc", (
                     shared:wrap-each("extent", local:get-values($file, "Extent")),
@@ -57,10 +58,17 @@ declare function local:transform-file($file as element(), $input-xtra as documen
                     shared:wrap-each("p", local:get-values($file, "Content description"))
                 )),
                 shared:wrap-all("controlaccess", (
-                    shared:wrap-each("corpname", local:get-xtra-info($input-xtra, $call-number, "O", "Text")),
-                    shared:wrap-each("geogname", local:get-xtra-info($input-xtra, $call-number, "L", "Text")),
-                    shared:wrap-each("persname", local:get-xtra-info($input-xtra, $call-number, "P", "Text")),
-                    shared:wrap-each("subject", local:get-xtra-info($input-xtra, $call-number, "K", "Text"))
+                    for $org in $xtra[./entry[@name = "Type"]/text() = "O"]
+                    return <corpname source="wien-organisations" authfilenumber="{ $org/entry[@name = "JMP IDNO"]/text() }">{ $org/entry[@name = "Text"]/text() }</corpname>,
+
+                    for $loc in $xtra[./entry[@name = "Type"]/text() = "L"]
+                    return <geogname source="wien-places" authfilenumber="{ $loc/entry[@name = "JMP IDNO"]/text() }">{ $loc/entry[@name = "Text"]/text() }</geogname>,
+
+                    for $per in $xtra[./entry[@name = "Type"]/text() = "P"]
+                    return <persname source="wien-persons" authfilenumber="{ $per/entry[@name = "JMP IDNO"]/text() }">{ $per/entry[@name = "Text"]/text() }</persname>,
+
+                    for $sub in $xtra[./entry[@name = "Type"]/text() = "K"]
+                    return <subject source="wien-terms" authfilenumber="{ $sub/entry[@name = "JMP IDNO"]/text() }">{ $sub/entry[@name = "Text"]/text() }</subject>
                 ))
             }
         </c01>
