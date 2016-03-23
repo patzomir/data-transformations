@@ -2,6 +2,9 @@ xquery version "3.0";
 
 module namespace shared = "shared";
 
+(: default namespace for EAD elements :)
+declare default element namespace "urn:isbn:1-931666-22-9";
+
 (: pad a number with leading zeroes :)
 (: - $number: the number as a string :)
 (: - $length: the total length of the padded number as integer :)

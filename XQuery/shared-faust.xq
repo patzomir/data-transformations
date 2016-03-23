@@ -2,6 +2,9 @@ xquery version "3.0";
 
 module namespace shared-faust = "shared-faust";
 
+(: default namespace for EAD elements :)
+declare default element namespace "urn:isbn:1-931666-22-9";
+
 (: generate an EAD header element :)
 declare function shared-faust:gen-header() as element() {
     <eadheader>
