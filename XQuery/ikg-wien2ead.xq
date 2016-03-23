@@ -20,15 +20,18 @@ declare function local:gen-header() as element() {
     </eadheader>
 };
 
+(: get the split text data for a given CSV field :)
 declare function local:get-values($record as element(), $field as xs:string) as xs:string* {
     let $text := $record/entry[@name = $field]/text()
     return fn:tokenize(fn:replace($text, ";$", ""), "(;|\s+// \*/)\s+")
 };
 
+(: fetch metadata for a given call number :)
 declare function local:get-xtra-info($input-xtra as document-node(), $call-number as xs:string) as element()* {
     $input-xtra/csv/record[./entry[@name = "Call number"]/text() = $call-number]
 };
 
+(: transform a file-level component :)
 declare function local:transform-file($file as element(), $input-xtra as document-node()) as element() {
     let $call-number := fn:exactly-one(local:get-values($file, "Call number"))
     let $xtra := local:get-xtra-info($input-xtra, $call-number)
@@ -49,33 +52,34 @@ declare function local:transform-file($file as element(), $input-xtra as documen
                 shared:wrap-each("origination", local:get-values($file, "Provenience"))
             }
         </did>
-            {
-                shared:wrap-all("altformavail", (
-                    shared:wrap-each("p", local:get-values($file, "Microfilm copies"))
-                )),
-                shared:wrap-all("phystech", (
-                    shared:wrap-each("p", local:get-values($file, "Physical condition"))
-                )),
-                shared:wrap-all("scopecontent", (
-                    shared:wrap-each("p", local:get-values($file, "Content description"))
-                )),
-                shared:wrap-all("controlaccess", (
-                    for $org in $xtra[./entry[@name = "Type"]/text() = "O"]
-                    return <corpname source="wien-organisations" authfilenumber="{ $org/entry[@name = "JMP IDNO"]/text() }">{ $org/entry[@name = "Text"]/text() }</corpname>,
+        {
+            shared:wrap-all("altformavail", (
+                shared:wrap-each("p", local:get-values($file, "Microfilm copies"))
+            )),
+            shared:wrap-all("phystech", (
+                shared:wrap-each("p", local:get-values($file, "Physical condition"))
+            )),
+            shared:wrap-all("scopecontent", (
+                shared:wrap-each("p", local:get-values($file, "Content description"))
+            )),
+            shared:wrap-all("controlaccess", (
+                for $org in $xtra[./entry[@name = "Type"]/text() = "O"]
+                return <corpname source="wien-organisations" authfilenumber="{ $org/entry[@name = "JMP IDNO"]/text() }">{ $org/entry[@name = "Text"]/text() }</corpname>,
 
-                    for $loc in $xtra[./entry[@name = "Type"]/text() = "L"]
-                    return <geogname source="wien-places" authfilenumber="{ $loc/entry[@name = "JMP IDNO"]/text() }">{ $loc/entry[@name = "Text"]/text() }</geogname>,
+                for $loc in $xtra[./entry[@name = "Type"]/text() = "L"]
+                return <geogname source="wien-places" authfilenumber="{ $loc/entry[@name = "JMP IDNO"]/text() }">{ $loc/entry[@name = "Text"]/text() }</geogname>,
 
-                    for $per in $xtra[./entry[@name = "Type"]/text() = "P"]
-                    return <persname source="wien-persons" authfilenumber="{ $per/entry[@name = "JMP IDNO"]/text() }">{ $per/entry[@name = "Text"]/text() }</persname>,
+                for $per in $xtra[./entry[@name = "Type"]/text() = "P"]
+                return <persname source="wien-persons" authfilenumber="{ $per/entry[@name = "JMP IDNO"]/text() }">{ $per/entry[@name = "Text"]/text() }</persname>,
 
-                    for $sub in $xtra[./entry[@name = "Type"]/text() = "K"]
-                    return <subject source="wien-terms" authfilenumber="{ $sub/entry[@name = "JMP IDNO"]/text() }">{ $sub/entry[@name = "Text"]/text() }</subject>
-                ))
-            }
-        </c01>
+                for $sub in $xtra[./entry[@name = "Type"]/text() = "K"]
+                return <subject source="wien-terms" authfilenumber="{ $sub/entry[@name = "JMP IDNO"]/text() }">{ $sub/entry[@name = "Text"]/text() }</subject>
+            ))
+        }
+    </c01>
 };
 
+(: transform a collection-level component :)
 declare function local:transform-collection($collection as element(), $input-xtra as document-node()) as element() {
     <archdesc level="collection">
         <did>
@@ -92,13 +96,14 @@ declare function local:transform-collection($collection as element(), $input-xtr
     </archdesc>
 };
 
-declare function local:transform($input-main as document-node(), $input-xtra as document-node()) as element() {
+(: transform an IKG Wien input to EAD :)
+declare function local:transform($input-main as document-node(), $input-xtra as document-node()) as element()* {
     <ead
-        xmlns="urn:isbn:1-931666-22-9"
-        xmlns:xlink="http://www.w3.org/1999/xlink"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:isbn:1-931666-22-9 http://www.loc.gov/ead/ead.xsd"
-        audience="external">
+    xmlns="urn:isbn:1-931666-22-9"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:isbn:1-931666-22-9 http://www.loc.gov/ead/ead.xsd"
+    audience="external">
         { local:gen-header() }
         { local:transform-collection($input-main/*:csv, $input-xtra) }
     </ead>

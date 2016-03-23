@@ -24,7 +24,7 @@ declare function shared-faust:gen-header() as element() {
 };
 
 (: get additional information for a given Faust object :)
-declare function shared-faust:get-xtra-info($faust-xtra as document-node(), $ref as xs:string) as element()? {
+declare function shared-faust:get-xtra-info($input-xtra as document-node(), $ref as xs:string) as element()? {
     let $ref := fn:concat("Objekt ", $ref, " / ED")
-    return fn:zero-or-one($faust-xtra/ED/FAUST-Objekt[Weitere_Bestandsangaben/text() = $ref])
+    return fn:zero-or-one($input-xtra/ED/FAUST-Objekt[Weitere_Bestandsangaben/text() = $ref])
 };
