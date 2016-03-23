@@ -40,9 +40,11 @@ declare function local:transform-file($file as element(), $input-xtra as documen
                 shared:wrap-each("unitdate", $xtra[./entry[@name = "Type"]/text() = "DATE"]/entry[@name = "Text"]/text()),
                 shared:wrap-each("unittitle", local:get-values($file, "Title")),
                 shared:wrap-all("physdesc", (
+                    shared:wrap-each("extent", local:get-values($file, "Number of files")),
                     shared:wrap-each("extent", local:get-values($file, "Extent")),
                     shared:wrap-each("physfacet", map { "type": "binding" }, local:get-values($file, "Binding")),
-                    shared:wrap-each("physfacet", map { "type": "material" }, local:get-values($file, "Format"))
+                    shared:wrap-each("physfacet", map { "type": "material" }, local:get-values($file, "Materials")),
+                    shared:wrap-each("dimensions", local:get-values($file, "Format"))
                 )),
                 shared:wrap-each("origination", local:get-values($file, "Provenience"))
             }
