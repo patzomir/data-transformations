@@ -60,7 +60,11 @@ public class LabelAdder {
 
                 while ((line = bufferedReader.readLine()) != null) {
                     String[] fields = Reconciler.COLUMN_SPLITTER.split(line);
-                    if (fields[0].length() == 0) bufferedWriter.write(Reconciler.COLUMN_SEPARATOR + line + "\n");
+                    
+                    if (fields[0].length() == 0) {
+                        bufferedWriter.write(Reconciler.COLUMN_SEPARATOR + line + "\n");
+                        continue;
+                    }
 
                     String[] places = Reconciler.LIST_SPLITTER.split(fields[0]);
                     StringBuilder lineages = new StringBuilder();
