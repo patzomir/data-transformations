@@ -46,7 +46,7 @@ public class Demo {
             // reconcile user input
             while (! (input = scanner.nextLine().trim()).equals(CMD_QUIT)) {
                 String[] atoms = Reconciler.LIST_SPLITTER.split(input);
-                SortedSet<Place> recons = Reconciler.reconcile(index, atoms);
+                SortedSet<Place> recons = Reconciler.reconcile(index, atoms, false);
 
                 // print result from reconciliation if any
                 if (recons == null) {

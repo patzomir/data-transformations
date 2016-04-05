@@ -231,73 +231,6 @@ public class Reconciler {
      * Lookup places from an array of atomized access points and return the most relevant places.
      * @param index The lookup index to use.
      * @param atoms An array of atomized access points.
-     * @return The most relevant matching places or null if no matches are found.
-     */
-    @Deprecated
-    public static SortedSet<Place> reconcile(PlaceIndex index, String[] atoms) {
-        if (atoms == null) return null;
-        List<SortedSet<Place>> candidates = new ArrayList<SortedSet<Place>>();
-
-        // iterate through valid atoms
-        for (String atom : atoms) {
-            if (atom == null) continue;
-
-            // get matches for atom
-            SortedSet<Place> matches = index.get(atom);
-            if (matches == null) continue;
-            int maxNumAncestors = -1;
-
-            // iterate through valid matches
-            for (Place match : matches) {
-                if (STOPFEATS.contains(match.getFeature())) continue;
-                int numAncestors = 0;
-
-                // iterate through other valid atoms
-                for (String otherAtom : atoms) {
-                    if (otherAtom == null) continue;
-                    if (otherAtom == atom) continue;
-
-                    // get matches for other atom
-                    SortedSet<Place> otherMatches = index.get(otherAtom);
-                    if (otherMatches == null) continue;
-
-                    // iterate through valid matches of other atom
-                    for (Place otherMatch : otherMatches) {
-                        if (STOPFEATS.contains(otherMatch.getFeature())) continue;
-
-                        // check if at least one of the matches of the other atom is ancestor
-                        if (match.isDescendantOf(otherMatch)) {
-                            numAncestors++;
-                            break;
-                        }
-                    }
-                }
-
-                // skip if this atom already has a match with this many or more ancestors
-                if (maxNumAncestors >= numAncestors) continue;
-                maxNumAncestors = numAncestors;
-
-                // extend candidate list if necessary
-                while (candidates.size() <= numAncestors) {
-                    candidates.add(new TreeSet<Place>());
-                }
-
-                // add this match to the set of matches with this many ancestors
-                candidates.get(numAncestors).add(match);
-            }
-        }
-
-        // return null if there are no matches for any atom
-        if (candidates.isEmpty()) return null;
-
-        // return the matches with the most ancestors
-        return candidates.get(candidates.size() - 1);
-    }
-
-    /**
-     * Lookup places from an array of atomized access points and return the most relevant places.
-     * @param index The lookup index to use.
-     * @param atoms An array of atomized access points.
      * @param keepAncestors Do you want to keep ancestors or not?
      * @return The most relevant matching places or null if no matches are found.
      */
@@ -329,6 +262,7 @@ public class Reconciler {
                     // get matches for other atom
                     SortedSet<Place> otherMatches = index.get(otherAtom);
                     if (otherMatches == null) continue;
+                    if (otherMatches.equals(matches)) continue;
 
                     // iterate through valid matches of other atom
                     for (Place otherMatch : otherMatches) {

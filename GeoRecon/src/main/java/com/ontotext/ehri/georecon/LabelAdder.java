@@ -1,6 +1,5 @@
 package com.ontotext.ehri.georecon;
 
-import org.openrdf.model.Literal;
 import org.openrdf.model.URI;
 import org.openrdf.query.*;
 import org.openrdf.repository.Repository;
