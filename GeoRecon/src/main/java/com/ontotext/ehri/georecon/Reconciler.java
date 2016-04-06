@@ -62,7 +62,7 @@ public class Reconciler {
             "( \\([^\\p{IsL}][^\\)]+\\)|\\s?\\p{IsLu}?\\[.+\\])?$"); // stuff in brackets
 
     // match junk to remove
-    private static final Pattern JUNK_PATTERN = Pattern.compile("^(British Mandate For |Kreis )");
+    private static final Pattern JUNK_PATTERN = Pattern.compile("(^Kreis | (Area|Region)$|)");
 
     /**
      * Run the program.
