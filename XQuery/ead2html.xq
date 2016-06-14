@@ -13,13 +13,20 @@ declare function local:transform-text($text as xs:string) as xs:string {
   replace($text, "[\p{IsC}]", "")
 };
 
+declare function local:translate-field($field-name as xs:string, $language as xs:string, $translations as element()) as xs:string {
+  let $translation := $translations/*:field[@name=$field-name]/*:label[@language=$language]/text()
+  return
+    if (exists($translation)) then $translation
+    else $field-name
+};
+
 (: transform a field of a component to html :)
-declare function local:transform-field($field as element()*) as element()? {
+declare function local:transform-field($field as element()*, $language as xs:string, $translations as element()) as element()? {
   
   (: check if the field actually has any content :)
   if (string-length(string-join(data($field), "")) > 0) then
     <div style="display: flex; padding-left: 10px">
-      <h5 style="position: relative; top: -5px; width: 20%">{local-name($field[1])}</h5>
+      <h5 style="position: relative; top: -5px; width: 20%">{local:translate-field(local-name($field[1]), $language, $translations)}</h5>
       
       {
         (: display element values in a container (e.g. <p>) :)
@@ -49,55 +56,68 @@ declare function local:transform-field($field as element()*) as element()? {
 };
 
 (: transform a component of an archival description to html :)
-declare function local:transform-component($component as element(), $level as xs:integer) as element() {
-  <div style="margin: 20px; border: solid black 1px; background-color: whitesmoke">
+declare function local:transform-component($component as element(), $level as xs:integer, $language as xs:string, $translations as element()) as element() {
+  <div style="margin: 20px; border: solid black 1px; background-color: oldlace">
   {
     (: transform fields :)
-    local:transform-field($component/did/unitid),
-    local:transform-field($component/did/unittitle),
-    local:transform-field($component/did/physdesc/extent),
-    local:transform-field($component/did/physdesc/physfacet),
-    local:transform-field($component/did/physdesc/dimensions),
-    local:transform-field($component/did/origination),
-    local:transform-field($component/bioghist),
-    local:transform-field($component/scopecontent),
-    local:transform-field($component/altformavail),
-    local:transform-field($component/accessrestrict),
-    local:transform-field($component/controlaccess/corpname),
-    local:transform-field($component/controlaccess/geogname),
-    local:transform-field($component/controlaccess/subject),
+    local:transform-field($component/did/unitid, $language, $translations),
+    local:transform-field($component/did/unittitle, $language, $translations),
+    local:transform-field($component/did/physdesc/extent, $language, $translations),
+    local:transform-field($component/did/physdesc/physfacet, $language, $translations),
+    local:transform-field($component/did/physdesc/dimensions, $language, $translations),
+    local:transform-field($component/did/origination, $language, $translations),
+    local:transform-field($component/bioghist, $language, $translations),
+    local:transform-field($component/scopecontent, $language, $translations),
+    local:transform-field($component/altformavail, $language, $translations),
+    local:transform-field($component/accessrestrict, $language, $translations),
+    local:transform-field($component/controlaccess/corpname, $language, $translations),
+    local:transform-field($component/controlaccess/geogname, $language, $translations),
+    local:transform-field($component/controlaccess/subject, $language, $translations),
     
     (: recursively transform next-level components :)
     let $next-level := $level + 1
     let $next-component-tag := concat("c", local:pad-with-zeroes(string($next-level), 2))
     return
       for $next-component in $component/*[local-name() = $next-component-tag]
-      return local:transform-component($next-component, $next-level)
+      return local:transform-component($next-component, $next-level, $language, $translations)
   }
   </div>
 };
 
 (: transform an ead to html :)
-declare function local:transform-ead($ead as element()) as element() {
+declare function local:transform-ead($ead as element(), $language as xs:string, $translations as element()) as element() {
   <html>
     <head>
+    {
+      if (string-length(data($ead/eadheader/filedesc/titlestmt/titleproper)) > 0)
+      then <title>{data($ead/eadheader/filedesc/titlestmt/titleproper)}</title>
+      else <title>EHRI EAD</title>
+    }
     </head>
     <body>
-      <div style="margin: 20px; border: solid black 1px; background-color: floralwhite">
+      <div style="margin: 20px">
+      {
+        (: transform ead header :)
+        local:transform-field($ead/eadheader/filedesc/titlestmt/author, $language, $translations),
+        local:transform-field($ead/eadheader/profiledesc/langusage/language, $language, $translations)
+      }
+      </div>
+      
+      <div style="margin: 20px; border: solid gray 1px; background-color: lightyellow">
       {
         (: transform archival description :)
-        local:transform-field($ead/archdesc/did/unitid),
-        local:transform-field($ead/archdesc/did/unittitle),
-        local:transform-field($ead/archdesc/did/abstract),
-        local:transform-field($ead/archdesc/scopecontent),
-        local:transform-field($ead/archdesc/did/processinfo)
+        local:transform-field($ead/archdesc/did/unitid, $language, $translations),
+        local:transform-field($ead/archdesc/did/unittitle, $language, $translations),
+        local:transform-field($ead/archdesc/did/abstract, $language, $translations),
+        local:transform-field($ead/archdesc/scopecontent, $language, $translations),
+        local:transform-field($ead/archdesc/did/processinfo, $language, $translations)
       }
       </div>
     
     {
       (: transform components in archival description :)
       for $component in $ead/archdesc/dsc/c01
-      return local:transform-component($component, 1)
+      return local:transform-component($component, 1, $language, $translations)
     }
     </body>
   </html>
@@ -105,11 +125,14 @@ declare function local:transform-ead($ead as element()) as element() {
 
 (: should be arguments to the script :)
 let $ead-path := "/home/georgi/schem/data/docs/personalpapers.xml"
+let $translations-path := "/home/georgi/schem/translations.xml"
 let $html-path := "/home/georgi/schem/data/html/test.html"
+let $language := "en"
 
 (: parse and transform the ead :)
 let $ead := doc($ead-path)
-let $html := local:transform-ead($ead/ead)
+let $translations := doc($translations-path)
+let $html := local:transform-ead($ead/ead, $language, $translations/*:translations)
 
 (: write the html :)
 let $ser-params := map { "method": "html", "encoding": "UTF-8", "media-type": "text/html", "include-content-type": "yes" }
