@@ -56,7 +56,7 @@ declare function local:transform-field($field as element()*, $language as xs:str
 };
 
 (: transform a component of an archival description to html :)
-declare function local:transform-component($component as element(), $level as xs:integer, $language as xs:string, $translations as element()) as element() {
+declare function local:transform-component($component as element(), $language as xs:string, $translations as element()) as element() {
   <div style="margin: 20px; border: solid black 1px; background-color: oldlace">
   {
     (: transform fields :)
@@ -74,12 +74,9 @@ declare function local:transform-component($component as element(), $level as xs
     local:transform-field($component/controlaccess/geogname, $language, $translations),
     local:transform-field($component/controlaccess/subject, $language, $translations),
     
-    (: recursively transform next-level components :)
-    let $next-level := $level + 1
-    let $next-component-tag := concat("c", local:pad-with-zeroes(string($next-level), 2))
-    return
-      for $next-component in $component/*[local-name() = $next-component-tag]
-      return local:transform-component($next-component, $next-level, $language, $translations)
+    (: recursively transform embedded components :)
+    for $next-component in $component/*[matches(local-name(), "c[0-1][0-9]")]
+    return local:transform-component($next-component, $language, $translations)
   }
   </div>
 };
@@ -117,7 +114,7 @@ declare function local:transform-ead($ead as element(), $language as xs:string, 
     {
       (: transform components in archival description :)
       for $component in $ead/archdesc/dsc/c01
-      return local:transform-component($component, 1, $language, $translations)
+      return local:transform-component($component, $language, $translations)
     }
     </body>
   </html>
