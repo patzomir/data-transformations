@@ -18,13 +18,13 @@ declare function local:transform-field($field as element()*) as element()? {
   
   (: check if the field actually has any content :)
   if (string-length(string-join(data($field), "")) > 0) then
-    <div style="display: flex; margin-top: 10px">
-      <h5 style="vertical-align: top; width: 20%">{local-name($field[1])}</h5>
+    <div style="display: flex; padding-left: 10px">
+      <h5 style="position: relative; top: -5px; width: 20%">{local-name($field[1])}</h5>
       
       {
         (: display element values in a container (e.g. <p>) :)
         if (exists($field/*)) then
-        <div style="vertical-align: top; width: 60%; position: relative; top: 5px">
+        <div style="width: 60%">
         {
           for $item in $field
           return
@@ -35,7 +35,7 @@ declare function local:transform-field($field as element()*) as element()? {
         
         (: display multiple values as list :)
         else
-        <ul style="vertical-align: top; width: 60%; position: relative; top: 5px">
+        <ul style="width: 60%">
         {
           for $item in $field
           return <li>{local:transform-text(data($item))}</li>
@@ -50,15 +50,21 @@ declare function local:transform-field($field as element()*) as element()? {
 
 (: transform a component of an archival description to html :)
 declare function local:transform-component($component as element(), $level as xs:integer) as element() {
-  <div style="margin-left: 25px; margin-top: 25px">
+  <div style="margin: 20px; border: solid black 1px; background-color: whitesmoke">
   {
     (: transform fields :)
     local:transform-field($component/did/unitid),
     local:transform-field($component/did/unittitle),
+    local:transform-field($component/did/physdesc/extent),
+    local:transform-field($component/did/physdesc/physfacet),
+    local:transform-field($component/did/physdesc/dimensions),
+    local:transform-field($component/did/origination),
     local:transform-field($component/bioghist),
     local:transform-field($component/scopecontent),
     local:transform-field($component/altformavail),
     local:transform-field($component/accessrestrict),
+    local:transform-field($component/controlaccess/corpname),
+    local:transform-field($component/controlaccess/geogname),
     local:transform-field($component/controlaccess/subject),
     
     (: recursively transform next-level components :)
@@ -77,7 +83,19 @@ declare function local:transform-ead($ead as element()) as element() {
     <head>
     </head>
     <body>
+      <div style="margin: 20px; border: solid black 1px; background-color: floralwhite">
+      {
+        (: transform archival description :)
+        local:transform-field($ead/archdesc/did/unitid),
+        local:transform-field($ead/archdesc/did/unittitle),
+        local:transform-field($ead/archdesc/did/abstract),
+        local:transform-field($ead/archdesc/scopecontent),
+        local:transform-field($ead/archdesc/did/processinfo)
+      }
+      </div>
+    
     {
+      (: transform components in archival description :)
       for $component in $ead/archdesc/dsc/c01
       return local:transform-component($component, 1)
     }
