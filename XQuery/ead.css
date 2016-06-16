@@ -1,0 +1,66 @@
+div {
+  display: flex;
+  margin-left: 10px;
+}
+
+span {
+  margin-left: 10px;
+}
+
+.component {
+  background-color: oldlace;
+  border: 1px solid black;
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.content {
+  display: block;
+}
+
+.label {
+  font-weight: bold;
+}
+
+.label span {
+  font-weight: normal;
+}
+
+.attribute {
+  display: none;
+  background-color: papayawhip;
+  border: 1px solid saddlebrown;
+  border-radius: 5px;
+  padding: 5px;
+  height: 100%;
+}
+
+div:hover > .attribute {
+  display: inline;
+}
+
+.message {
+  display: none;
+  color: darkred;
+  background-color: mistyrose;
+  border: 1px solid darkred;
+  border-radius: 5px;
+  padding: 5px;
+  height: 100%;
+}
+
+.message .role {
+  font-weight: bold;
+}
+
+.message .role:before {
+  content: "[";
+}
+
+.message .role:after {
+  content: "]";
+}
+
+div:hover > .message {
+  display: inline;
+}
