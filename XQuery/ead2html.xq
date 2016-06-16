@@ -22,20 +22,19 @@ declare function local:field2label($field as xs:string, $language as xs:string, 
 
 declare function local:transform-element($element as element(), $special-tags as xs:string*, $language as xs:string, $labels as document-node()) as element() {
   let $tag := local-name($element)
+  let $role := $element/@svrl_role
+  let $text := $element/@svrl_text
   return
-    <div class="{local:field2class($tag)}">
+    <div class="{local:field2class($tag), if ($role and $text) then "fail" else ()}">
       <span class="label">{local:field2label($tag, $language, $labels)}</span>
       {
-        let $role := $element/@svrl_role
-        let $text := $element/@svrl_text
-        return
-          if ($role and $text)
-          then
-            <div class="message">
-              <span class="role">{data($role)}</span>
-              <span class="text">{data($text)}</span>
-            </div>
-          else (),
+        if ($role and $text)
+        then
+          <div class="message">
+            <span class="role">{data($role)}</span>
+            <span class="text">{data($text)}</span>
+          </div>
+        else (),
         
         for $attribute in $element/@*
           let $attribute-name := local-name($attribute)
