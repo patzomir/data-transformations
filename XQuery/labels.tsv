@@ -1,8 +1,147 @@
 field	en
-eadid	Identifier
-language	Language of Description
-level	Level of Description
+abbr	Abbreviation
+abstract	Abstract
+accessrestrict	Conditions Governing Access
+accruals	Accruals
+acqinfo	Acquisition Information
+address	Address
+addressline	Address Line
+altformavail	Alternative Form Available
+appraisal	Appraisal Information
+arc	Arc
+archdesc	Archival Description
+archdescgrp	Archival Description Group
+archref	Archival Reference
+arrangement	Arrangement
+author	Author
+bibliography	Bibliography
+bibref	Bibliographic Reference
+bibseries	Bibliographic Series
+bioghist	Biography or History
+blockquote	Block Quote
+c	Component (Unnumbered)
+c01	Component (First Level)
+c02	Component (Second Level)
+c03	Component (Third Level)
+c04	Component (Fourth Level)
+c05	Component (Fifth Level)
+c06	Component (Sixth Level)
+c07	Component (Seventh Level)
+c08	Component (Eighth Level)
+c09	Component (Ninth Level)
+c10	Component (Tenth Level)
+c11	Component (Eleventh Level)
+c12	Component (Twelfth Level)
+change	Change
+chronitem	Chronology List Item
+chronlist	Chronology List
+colspec	Table Column Specification
+container	Container
+controlaccess	Controlled Access Headings
+corpname	Corporate Name
+creation	Creation
+custodhist	Custodial History
+dao	Digital Archival Object
+daodesc	Digital Archival Object Description
+daogrp	Digital Archival Object Group
+daoloc	Digital Archival Object Location
+date	Date
+defitem	Definition List Item
+descgrp	Description Group
+descrules	Descriptive Rules
+did	Descriptive Identification
+dimensions	Dimensions
+div	Text Division
+dsc	Description of Subordinate Components
+dscgrp	Description of Subordinate Components Group
+ead	Encoded Archival Description
+eadgrp	EAD Group
+eadheader	EAD Header
+eadid	EAD Identifier
+edition	Edition
+editionstmt	Edition Statement
+emph	Emphasis
+entry	Table Entry
+event	Event
+eventgrp	Event Group
+expan	Expansion
+extent	Extent
+extptr	Extended Pointer
+extptrloc	Extended Pointer Location
+extref	Extended Reference
+extrefloc	Extended Reference Location
+famname	Family Name
+filedesc	File Description
+fileplan	File Plan
+frontmatter	Front Matter
+function	Function
+genreform	Genre/Physical Characteristic
+geogname	Geographic Name
+head	Heading
+head01	First Heading
+head02	Second Heading
+imprint	Imprint
+index	Index
+indexentry	Index Entry
+item	Item
+label	Label
+langmaterial	Language of the Material
+language	Language
+langusage	Language Usage
+lb	Line Break
+legalstatus	Legal Status
+linkgrp	Linking Group
+list	List
+listhead	List Heading
+materialspec	Material Specific Details
+name	Name
+namegrp	Name Group
+note	Note
+notestmt	Note Statement
+num	Number
+occupation	Occupation
+odd	Other Descriptive Data
+originalsloc	Location of Originals
+origination	Origination
+otherfindaid	Other Finding Aid
+p	Paragraph
+persname	Personal Name
+physdesc	Physical Description
+physfacet	Physical Facet
+physloc	Physical Location
+phystech	Physical Characteristics and Technical Requirements
+prefercite	Preferred Citation
+processinfo	Processing Information
+profiledesc	Profile Description
+ptr	Pointer
+ptrgrp	Pointer Group
+ptrloc	Pointer Location
+publicationstmt	Publication Statement
+publisher	Publisher
+ref	Reference
+refloc	Reference Location
+relatedmaterial	Related Material
+repository	Repository
+resource	Resource
+revisiondesc	Revision Description
+row	Table Row
+runner	Runner
 scopecontent	Scope and Content
-processinfo	Process Info
-subject	Subjects
-
+separatedmaterial	Separated Material
+seriesstmt	Series Statement
+sponsor	Sponsor
+subarea	Subordinate Area
+subject	Subject
+subtitle	Subtitle
+table	Table
+tbody	Table Body
+tgroup	Table Group
+thead	Table Head
+title	Title
+titlepage	Title Page
+titleproper	Title Proper of the Finding Aid
+titlestmt	Title Statement
+unitdate	Date of the Unit
+unitid	ID of the Unit
+unittitle	Title of the Unit
+userestrict	Conditions Governing Use
