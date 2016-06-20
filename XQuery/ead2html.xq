@@ -26,34 +26,43 @@ declare function local:transform-element($element as element(), $special-tags as
   let $text := $element/@svrl_text
   return
     <div class="{local:field2class($tag), if ($role and $text) then "fail" else ()}">
-      <span class="label">{local:field2label($tag, $language, $labels)}</span>
-      {
-        if ($role and $text)
-        then
-          <div class="message">
-            <span class="role">{data($role)}</span>
-            <span class="text">{data($text)}</span>
-          </div>
-        else (),
-        
-        for $attribute in $element/@*
-          let $attribute-name := local-name($attribute)
-          return
-            if (not($attribute-name = "svrl_role" or $attribute-name = "svrl_text"))
+      <div class="meta">
+        <span class="label">{local:field2label($tag, $language, $labels)}</span>
+        {
+          if ($element/@*)
+          then
+          <table class="tooltip">
+          {
+            if ($role and $text)
             then
-              <div class="attribute">
-                <span class="label">{local:field2label($attribute-name, $language, $labels)}</span>
-                <span class="value">{data($attribute)}</span>
-              </div>
-            else ()
-      }
+              <tr class="message">
+                <td class="role">{data($role)}</td>
+                <td class="text">{data($text)}</td>
+              </tr>
+            else (),
+            
+            for $attribute in $element/@*
+              let $attribute-name := local-name($attribute)
+              return
+                if (not($attribute-name = "svrl_role" or $attribute-name = "svrl_text"))
+                then
+                  <tr class="attribute">
+                    <td class="label">{local:field2label($attribute-name, $language, $labels)}</td>
+                    <td class="value">{data($attribute)}</td>
+                  </tr>
+                else ()
+          }
+          </table>
+          else ()
+        }
+      </div>
       <div class="content">
       {
         for $child in $element/ead:*
         let $child-tag := local-name($child)
         return
           if (index-of($special-tags, $child-tag))
-          then element {$child-tag} {local:legalize-text(data($child))}
+          then <span class="text">{local:legalize-text(data($child))}</span>
           else local:transform-element($child, $special-tags, $language, $labels),
         
         for $text in $element/text()
@@ -67,9 +76,11 @@ declare function local:transform-document($ead as document-node(), $special-tags
   <html>
     <head>
       <link rel="stylesheet" href="ead.css"/>
+      <title>{data($ead/ead:ead/ead:eadheader/ead:eadid)}</title>
     </head>
     <body>
     {
+      local:transform-element($ead/ead:ead/ead:eadheader, $special-tags, $language, $labels),
       for $component in $ead/ead:ead/ead:archdesc/ead:dsc/ead:c01
       return local:transform-element($component, $special-tags, $language, $labels)
     }
@@ -77,7 +88,7 @@ declare function local:transform-document($ead as document-node(), $special-tags
   </html>
 };
 
-let $ead-path := "/home/georgi/schem/data/docs/personalpapers_injected.xml"
+let $ead-path := "/home/georgi/schem/data/docs/ikg-jerusalem-ead_inject.xml"
 let $labels-path := "/home/georgi/schem/labels.tsv"
 let $html-path := "/home/georgi/schem/test.html"
 
