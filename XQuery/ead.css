@@ -27,6 +27,10 @@ span.label {
   font-weight: bold;
 }
 
+.info > .meta > span.label {
+  background-color: peachpuff;
+}
+
 .fail > .meta > span.label {
   background-color: salmon;
 }

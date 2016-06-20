@@ -25,7 +25,7 @@ declare function local:transform-element($element as element(), $special-tags as
   let $role := $element/@svrl_role
   let $text := $element/@svrl_text
   return
-    <div class="{local:field2class($tag), if ($role and $text) then "fail" else ()}">
+    <div class="{local:field2class($tag), if ($role and $text) then "fail" else (if ($element/@*) then "info" else())}">
       <div class="meta">
         <span class="label">{local:field2label($tag, $language, $labels)}</span>
         {
