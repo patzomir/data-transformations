@@ -34,10 +34,18 @@ span.text {
 }
 
 .info > .meta > span.label {
-  background-color: peachpuff;
+  background-color: lightsalmon;
 }
 
 .fail > .meta > span.label {
+  background-color: crimson;
+}
+
+.info > .meta > span.label:hover {
+  background-color: peachpuff;
+}
+
+.fail > .meta > span.label:hover {
   background-color: salmon;
 }
 
