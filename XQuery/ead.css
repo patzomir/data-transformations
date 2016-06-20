@@ -4,7 +4,7 @@ div {
 }
 
 .eadheader {
-  background-color: antiquewhite;
+  background-color: seashell;
   border: 1px solid black;
   border-radius: 5px;
   margin-bottom: 10px;
@@ -12,7 +12,7 @@ div {
 }
 
 .component {
-  background-color: seashell;
+  background-color: ivory;
   border: 1px solid black;
   border-radius: 5px;
   margin-bottom: 5px;
@@ -25,6 +25,12 @@ div {
 
 span.label {
   font-weight: bold;
+  padding: 2px;
+}
+
+span.text {
+  position: relative;
+  top: 2px;
 }
 
 .info > .meta > span.label {
@@ -47,20 +53,25 @@ span.label {
 .tooltip {
   display: none;
   position: absolute;
-  left: 105%;
-  background-color: peachpuff;
-  border: 1px solid coral;
-  border-radius: 5px;
-  padding: 5px;
+  left: 101%;
+  top: -2px;
   z-index: 1;
 }
 
+.tooltip tr {
+  display: flex;
+}
+
 .message {
-  background-color: lightsalmon;
+  background-color: salmon;
 }
 
 .message .role {
   font-weight: bold;
+}
+
+.attribute {
+  background-color: peachpuff;
 }
 
 .attribute .label {
