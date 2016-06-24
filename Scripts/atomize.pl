@@ -26,7 +26,7 @@ my $index_input = undef;
 # read input file line by line
 while (<$input>) {
     my $line = $_;
-    chomp($line);
+    $line =~ s/[\n\r]//g;
     my @fields = split(/$FIELD_DELIM/, $line);
 
     # check if index of input column is defined
