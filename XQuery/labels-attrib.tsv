@@ -1,0 +1,77 @@
+field	en
+abbr	abbreviation
+actuate	actuate
+align	align
+althead	alternative heading
+altrender	alternative rendering
+audience	audience
+authfilenumber	authority file number
+calendar	calendar
+certainty	certainty
+char	alignment character
+charoff	alignment character offset percentage
+colname	column name
+colnum	column number
+cols	number of columns
+colsep	column separator (rule)
+colwidth	column width
+continuation	continuation
+countrycode	country code
+countryencoding	country encoding
+datechar	nature of date
+dateencoding	date encoding
+encodinganalog	encoding analog
+entityref	entity reference
+era	era
+expan	expansion
+findaidstatus	finding aid status
+frame	frame
+id	id
+identifier	identifier
+label	label
+langcode	language code
+langencoding	language encoding
+level	level
+mainagencycode	main agency code
+mark	mark
+morerows	more (additional) rows
+nameend	name of starting column
+namest	name of ending column
+normal	normalized value
+numeration	numeration type
+otherlevel	other level
+othertype	other type
+parent	parent
+pgwide	page-wide
+placement	placement
+publicid	public identifier
+relatedencoding	related encoding
+render	render
+repositorycode	repository code
+repositoryencoding	repository encoding
+role	role
+rowsep	row separator (below row)	
+rules	descriptive rules
+scriptcode	script code
+scriptencoding	script encoding
+show	show
+source	source
+target	target
+tpattern	table pattern
+type	type
+unit	unit
+url	universal resource locator
+urn	universal resource name
+valign	vertical alignment
+values	values
+xlink:actuate	xlink actuate
+xlink:arcrole	xlink arc role
+xlink:from	xlink from
+xlink:href	xlink hyper reference
+xlink:label	xlink label
+xlink:role	xlink role
+xlink:show	xlink show
+xlink:title	xlink title
+xlink:to	xlink to
+xlink:type	xlink type
+xpointer	xpointer locator

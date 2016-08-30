@@ -20,7 +20,7 @@ declare function local:field2label($field as xs:string, $language as xs:string, 
     else $field
 };
 
-declare function local:transform-element($element as element(), $special-tags as xs:string*, $language as xs:string, $labels as document-node()) as element() {
+declare function local:transform-element($element as element(), $special-tags as xs:string*, $language as xs:string, $labels as document-node(), $labels-attr as document-node()) as element() {
   let $tag := local-name($element)
   let $role := $element/@svrl_role
   let $text := $element/@svrl_text
@@ -47,7 +47,7 @@ declare function local:transform-element($element as element(), $special-tags as
                 if (not($attribute-name = "svrl_role" or $attribute-name = "svrl_text"))
                 then
                   <tr class="attribute">
-                    <td class="label">{local:field2label($attribute-name, $language, $labels)}</td>
+                    <td class="label">{local:field2label($attribute-name, $language, $labels-attr)}</td>
                     <td class="value">{data($attribute)}</td>
                   </tr>
                 else ()
@@ -63,7 +63,7 @@ declare function local:transform-element($element as element(), $special-tags as
         return
           if (index-of($special-tags, $child-tag))
           then <span class="text">{local:legalize-text(data($child))}</span>
-          else local:transform-element($child, $special-tags, $language, $labels),
+          else local:transform-element($child, $special-tags, $language, $labels, $labels-attr),
         
         for $text in $element/text()
         return <span class="text">{local:legalize-text($text)}</span>
@@ -72,7 +72,7 @@ declare function local:transform-element($element as element(), $special-tags as
     </div>
 };
 
-declare function local:transform-document($ead as document-node(), $special-tags as xs:string*, $language as xs:string, $labels as document-node()) as element() {
+declare function local:transform-document($ead as document-node(), $special-tags as xs:string*, $language as xs:string, $labels as document-node(), $labels-attr as document-node()) as element() {
   <html>
     <head>
       <link rel="stylesheet" href="ead.css"/>
@@ -80,9 +80,9 @@ declare function local:transform-document($ead as document-node(), $special-tags
     </head>
     <body>
     {
-      local:transform-element($ead/ead:ead/ead:eadheader, $special-tags, $language, $labels),
+      local:transform-element($ead/ead:ead/ead:eadheader, $special-tags, $language, $labels, $labels-attr),
       for $component in $ead/ead:ead/ead:archdesc/ead:dsc/ead:c01
-      return local:transform-element($component, $special-tags, $language, $labels)
+      return local:transform-element($component, $special-tags, $language, $labels, $labels-attr)
     }
     </body>
   </html>
@@ -90,6 +90,7 @@ declare function local:transform-document($ead as document-node(), $special-tags
 
 let $ead-path := "/home/georgi/schem/data/docs/ikg-jerusalem-ead_inject.xml"
 let $labels-path := "/home/georgi/schem/labels.tsv"
+let $labels-attr-path := "/home/georgi/schem/labels-attrib.tsv"
 let $html-path := "/home/georgi/schem/test.html"
 
 let $language := "en"
@@ -97,6 +98,7 @@ let $special-tags := ("p")
 
 let $ead := doc($ead-path)
 let $labels := csv:parse(file:read-text($labels-path), map {"separator": "tab", "header": "yes"})
+let $labels-attr := csv:parse(file:read-text($labels-attr-path), map {"separator": "tab", "header": "yes"})
 
-let $html := local:transform-document($ead, $special-tags, $language, $labels)
+let $html := local:transform-document($ead, $special-tags, $language, $labels, $labels-attr)
 return file:write($html-path, $html, map {"method": "html", "media-type": "text/html", "encoding": "UTF-8", "include-content-type": "yes"})
