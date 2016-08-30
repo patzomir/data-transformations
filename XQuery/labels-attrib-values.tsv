@@ -1,0 +1,13 @@
+field	value	en
+align	char	alignment on character
+era	ce	common era
+level	otherlevel	other level
+level	recordgrp	record group
+level	subgrp	subgroup
+type	analyticover	anlytic overview
+type	othertype	other type
+type	deflist	definition list
+numeration	upperalpha	uppercase alphabetical
+numeration	loweralpha	lowercase alphabetical
+numeration	upperroman	uppercase roman
+numeration	lowerroman	lowercase roman
