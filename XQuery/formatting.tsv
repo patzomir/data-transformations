@@ -1,0 +1,19 @@
+ead	render	html	style	wrap
+blockquote		blockquote		
+emph	bold	b		
+emph	bolddoublequote	b		"
+emph	bolditalic	b	font-style:italic	
+emph	boldsinglequote	b		'
+emph	boldsmcaps	b	font-variant:small-caps	
+emph	boldunderline	b	text-decoration:underline	
+emph	doublequote			"
+emph	italic	i		
+emph	nonproport	span	font:Courier	
+emph	singlequote			'
+emph	smcaps	emph	font-variant:small-caps	
+emph	sub	sub		
+emph	super	sup		
+emph	underline	u		
+emph		em		
+lb		br		
+p		p		
