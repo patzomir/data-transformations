@@ -40,8 +40,17 @@ declare function local:transform-element($element as element(), $formatting as d
     then
       let $formatting-record-render := $formatting/csv/record[ead/text() = $tag and render/text() = $element/@render]
       let $formatting-record := if ($formatting-record-render) then $formatting-record-render else $formatting-record
+      let $html-tag := $formatting-record/html/text()
+      let $style := $formatting-record/style/text()
       let $wrap := $formatting-record/wrap/text()
-      return <span class="text">{$wrap, local:legalize-text(data($element)), $wrap}</span>
+      return <span class="text">{$wrap,
+        if ($html-tag)
+        then
+          if ($style)
+          then element {$html-tag} {attribute style {$style}, local:legalize-text(data($element))}
+          else element {$html-tag} {local:legalize-text(data($element))}
+        else local:legalize-text(data($element)),
+        $wrap}</span>
     
     (: regular EAD element :)
     else
