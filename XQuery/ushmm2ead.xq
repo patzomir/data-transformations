@@ -16,9 +16,21 @@ declare function local:gen-c($input as node(), $mapping as node(), $level as xs:
       for $value in fn:data(local:get-value($input, $mapping, "unitid"))
       return <unitid>{ $value }</unitid>,
       for $value in fn:data(local:get-value($input, $mapping, "unittitle"))
-      return <unittitle>{ $value }</unittitle>
+      return <unittitle>{ $value }</unittitle>,
+      for $value in fn:data(local:get-value($input, $mapping, "physdesc"))
+      return <physdesc>{ $value }</physdesc>,
+      <langmaterial>
+      {
+        for $value in fn:data(local:get-value($input, $mapping, "language"))
+        return <language>{ $value }</language>
+      }
+      </langmaterial>
     }
     </did>,
+    for $value in fn:data(local:get-value($input, $mapping, "accessrestrict"))
+    return <accessrestrict>{ $value }</accessrestrict>,
+    for $value in fn:data(local:get-value($input, $mapping, "userestrict"))
+    return <userestrict>{ $value }</userestrict>,
     <controlaccess>
     {
       for $value in fn:data(local:get-value($input, $mapping, "corpname"))

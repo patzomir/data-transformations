@@ -2,6 +2,11 @@ field	path
 top-level-component	/json/pair[@name="response"]/pair[@name="docs"]/item
 unitid	pair[@name="id" or @name="irn"]
 unittitle	pair[@name="title_display"]
+physdesc	pair[@name="material_composition"]/item
+language	pair[@name="language"]/item
+accessrestrict	pair[@name="conditions_access"]/item
+userestrict	pair[@name="conditions_use"]/item
+scopecontent	pair[@name="scope_content"]/item
 corpname	pair[@name="subject_corporate"]/item
 genreform	pair[@name="subject_genre_form"]/item
 geogname	pair[@name="subject_geography"]/item
