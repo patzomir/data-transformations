@@ -12,8 +12,29 @@ declare function local:gen-c($input as node(), $mapping as node(), $level as xs:
   return element { $tag } {
     attribute level { "file" },
     <did>
-      <unitid>{ fn:data(local:get-value($input, $mapping, "unitid")) }</unitid>
-    </did>
+    {
+      for $value in fn:data(local:get-value($input, $mapping, "unitid"))
+      return <unitid>{ $value }</unitid>,
+      for $value in fn:data(local:get-value($input, $mapping, "unittitle"))
+      return <unittitle>{ $value }</unittitle>
+    }
+    </did>,
+    <controlaccess>
+    {
+      for $value in fn:data(local:get-value($input, $mapping, "corpname"))
+      return <corpname>{ $value }</corpname>,
+      for $value in fn:data(local:get-value($input, $mapping, "genreform"))
+      return <genreform>{ $value }</genreform>,
+      for $value in fn:data(local:get-value($input, $mapping, "geogname"))
+      return <geogname>{ $value }</geogname>,
+      for $value in fn:data(local:get-value($input, $mapping, "persname"))
+      return <persname>{ $value }</persname>,
+      for $value in fn:data(local:get-value($input, $mapping, "subject"))
+      return <subject>{ $value }</subject>
+    }
+    </controlaccess>,
+    for $value in fn:data(local:get-value($input, $mapping, "child-component"))
+    return local:gen-c($value, $mapping, $level + 1)
   }
 };
 
@@ -61,7 +82,7 @@ let $input := json:parse(file:read-text($input-path, $input-encoding),
   map { "format":"attributes" })
 
 (: read mapping :)
-let $mapping-path := "/home/georgi/Desktop/mapping-ushmm.tsv"
+let $mapping-path := "/home/georgi/git/data-transformations/XQuery/mapping-ushmm.tsv"
 let $mapping-encoding := "UTF-8"
 let $mapping := csv:parse(file:read-text($mapping-path, $mapping-encoding),
   map { "separator":"tab", "header":"yes", "quotes":"no" })

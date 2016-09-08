@@ -1,3 +1,9 @@
 field	path
 top-level-component	/json/pair[@name="response"]/pair[@name="docs"]/item
-unitid	pair[@name="id"]
+unitid	pair[@name="id" or @name="irn"]
+unittitle	pair[@name="title_display"]
+corpname	pair[@name="subject_corporate"]/item
+genreform	pair[@name="subject_genre_form"]/item
+geogname	pair[@name="subject_geography"]/item
+persname	pair[@name="subject_person"]/item
+subject	pair[@name="subject_topical"]/item
