@@ -1,0 +1,3 @@
+field	path
+top-level-component	/json/pair[@name="response"]/pair[@name="docs"]/item
+unitid	pair[@name="id"]
