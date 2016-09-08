@@ -31,6 +31,8 @@ declare function local:gen-c($input as node(), $mapping as node(), $level as xs:
     return <accessrestrict>{ $value }</accessrestrict>,
     for $value in fn:data(local:get-value($input, $mapping, "userestrict"))
     return <userestrict>{ $value }</userestrict>,
+    for $value in fn:data(local:get-value($input, $mapping, "scopecontent"))
+    return <scopecontent>{ $value }</scopecontent>,
     <controlaccess>
     {
       for $value in fn:data(local:get-value($input, $mapping, "corpname"))
