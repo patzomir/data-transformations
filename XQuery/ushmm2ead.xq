@@ -47,7 +47,7 @@ declare function local:gen-c($input as node(), $mapping as node(), $level as xs:
       return <subject>{ $value }</subject>
     }
     </controlaccess>,
-    for $value in fn:data(local:get-value($input, $mapping, "child-component"))
+    for $value in local:get-value($input, $mapping, "child-component")
     return local:gen-c($value, $mapping, $level + 1)
   }
 };
