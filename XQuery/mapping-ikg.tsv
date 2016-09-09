@@ -1,4 +1,7 @@
 field	query
+eadid	"IKG-wien"
+eadid-countrycode	"AT"
+titleproper	"WP2 files of IKG concerning wien"
 top-level-component	/root/main/csv/record
 origination	Provenience__creators_
 unitdate	let $call-number := Call_number/text() return /root/meta/csv/record[Call_number/text() = $call-number and Type__O___organisation__L___place_location__K___keyword__P___person__DATE___date_or_date_range_in_MM_DD_YYYY___MM_DD_YYYY_format___sd____undated_/text() = "DATE"]/Text

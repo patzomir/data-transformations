@@ -16,7 +16,21 @@ declare function ead:ead($input as document-node(), $mapping-path as xs:string) 
 };
 
 declare function ead:eadheader($input as node(), $mapping as document-node()) as element() {
-  <eadheader/>
+  <eadheader>
+    <eadid countrycode="{ fn:data(ead:field-value($input, $mapping, "eadid-countrycode")) }">
+    {
+      fn:data(ead:field-value($input, $mapping, "eadid"))
+    }
+    </eadid>
+    <filedesc>
+      <titlestmt>
+        <titleproper>{ fn:data(ead:field-value($input, $mapping, "titleproper")) }</titleproper>
+      </titlestmt>
+    </filedesc>
+    <profiledesc>
+      <creation>Created by ead.xq on <date>{ fn:current-date() }</date>.</creation>
+    </profiledesc>
+  </eadheader>
 };
 
 declare function ead:frontmatter($input as node(), $mapping as document-node()) as element() {
