@@ -24,5 +24,4 @@ let $input := document
     </root>
   }
 
-return ead:ead($input, $mapping-path)
-(:return file:write($output-path, ead:ead($input, $mapping-path), map { "omit-xml-declaration":"no" }):)
+return file:write($output-path, ead:ead($input, $mapping-path), map { "omit-xml-declaration":"no" })

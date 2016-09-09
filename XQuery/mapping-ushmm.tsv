@@ -1,6 +1,5 @@
-field	path
+field	query
 top-level-component	/json/pair[@name="response"]/pair[@name="docs"]/item
-child-component	let $irn := pair[@name="irn"]/text() return ../item[pair[@name="assoc_parent_irn"]/item[1]/text()=$irn]
 unitid	pair[@name="id" or @name="irn"]
 unittitle	pair[@name="title_display"]
 physdesc	pair[@name="material_composition"]/item
