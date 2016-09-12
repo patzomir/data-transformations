@@ -1,0 +1,7 @@
+target-path	target-node	source-node	value
+/	ead	/searchResult/mediaDataList	
+/ead/	@eadid	.	./mdProperties/mdProperty[attribute/text() = "kazernedossin_id"]/value/text()
+/ead/	archdesc	.	
+/ead/archdesc/	did	.	
+/ead/archdesc/did/	unitid	.	./mdProperties/mdProperty[attribute/text() = "kazernedossin_id"]/value/text()
+/ead/archdesc/did/	unittitle	.	./title/text()
