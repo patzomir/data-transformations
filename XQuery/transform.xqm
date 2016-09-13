@@ -3,10 +3,12 @@ xquery version "3.0";
 (: module for configurable XML transformations :)
 module namespace transform = "transform";
 
-declare function transform:transform($source-document as document-node(), $configuration-path as xs:string) as document-node()* {
+import module namespace functx = 'http://www.functx.com';
+
+declare function transform:transform($source-document as document-node(), $configuration-path as xs:string, $default-namespace as xs:string) as document-node()* {
   let $configuration := csv:parse(file:read-text($configuration-path), map { "separator": "tab", "header": "yes", "quotes": "no" })
     for $target-root-node in transform:make-children("/", $source-document, $configuration)
-    return document { $target-root-node }
+    return document { functx:change-element-ns-deep($target-root-node, $default-namespace, "") }
 };
 
 declare function transform:make-children($target-path as xs:string, $source-node as node(), $configuration as document-node()) as node()* {
