@@ -1,8 +1,5 @@
 target-path	target-node	source-node	value
 /	ead	/searchResult/mediaDataList	
-/ead/	$xlink	.	"http://www.w3.org/1999/xlink"
-/ead/	$xsi	.	"http://www.w3.org/2001/XMLSchema-instance"
-/ead/	@xsi:schemaLocation	.	"urn:isbn:1-931666-22-9 http://www.loc.gov/ead/ead.xsd"
 /ead/	eadheader	.	
 /ead/eadheader/	eadid	.	.//mdProperty[attribute/text() = "kazernedossin_id"]/value/text()
 /ead/	archdesc	.	
