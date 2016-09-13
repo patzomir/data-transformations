@@ -15,9 +15,11 @@ declare function transform:make-children($target-path as xs:string, $source-node
     let $child-value := transform:evaluate-xquery($configuration-record/value/text(), $child-source-node)
     let $child-name := $configuration-record/target-node/text()
     return
-      if (fn:starts-with($child-name, "@"))
-      then
+      if (fn:starts-with($child-name, "@")) then
         let $child := attribute { fn:substring($child-name, 2) } { $child-value }
+        return if ($child-value) then $child else ()
+      else if (fn:starts-with($child-name, "$")) then
+        let $child := namespace { fn:substring($child-name, 2) } { $child-value }
         return if ($child-value) then $child else ()
       else
         let $child-children := transform:make-children(fn:concat($target-path, $child-name, "/"), $child-source-node, $configuration)
