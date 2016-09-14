@@ -1,26 +1,50 @@
 xquery version "3.0";
 
 (: module for configurable XML transformations :)
+(: configuration is a TSV file with four columns: :)
+(: 1. target-path: path defining the location of the target node (slash-separated list of element names; must end with slash) :)
+(: 2. target-node: name of the target node (attributes prefixed with "@"; may contain defined namespace prefixes) :)
+(: 3. source-node: XQuery expression returning the corresponding node in the source document (evaluated in the context of the parent source node) :)
+(: 4. value: XQuery expression returning the value of the target node (evaluated in the context of the source node; may be empty) :)
 module namespace transform = "transform";
 
+(: transform a source document into target documents with the given configuration and namespaces :)
+(: $source-document: the source document as a single document node (if you need to transform multiple documents at the same time, you can wrap them in a single document node) :)
+(: $configuration-path: the path to the transformation configuration :)
+(: $namespaces: map from namespace prefix to namespace URI :)
+(: returns: a list of target the document nodes :)
 declare function transform:transform($source-document as document-node(), $configuration-path as xs:string, $namespaces as map(xs:string, xs:string)) as document-node()* {
   let $configuration := csv:parse(file:read-text($configuration-path), map { "separator": "tab", "header": "yes", "quotes": "no" })
     for $target-root-node in transform:make-children("/", $source-document, $configuration, $namespaces)
     return document { $target-root-node }
 };
 
+(: make children for the given target path in the configuration :)
+(: $target-path: the target path for which to make children as in the configuration :)
+(: $source-node: the node (e.g. element) in the source document that corresponds to the given target path :)
+(: $configuration: the parsed configuration file as a document node :)
+(: $namespaces: map from namespace prefix to namespace URI :)
+(: returns: a list of children nodes (attributes or elements) for the given target path :)
 declare function transform:make-children($target-path as xs:string, $source-node as node(), $configuration as document-node(), $namespaces as map(xs:string, xs:string)) as node()* {
+
+  (: go through the target nodes defined for this target path in order of configuration :)
   for $configuration-record in $configuration/csv/record[target-path/text() = $target-path]
+
+    (: go through the source nodes corresponding to each target node :)
     for $child-source-node in transform:evaluate-xquery($configuration-record/source-node/text(), $source-node)
     let $child-value := transform:evaluate-xquery($configuration-record/value/text(), $child-source-node)
     let $child-name := $configuration-record/target-node/text()
     return
+
+      (: return an attribute :)
       if (fn:starts-with($child-name, "@")) then
         let $child-name := fn:substring($child-name, 2)
         let $name-prefix := fn:substring-before($child-name, ":")
         let $child-qname := if ($name-prefix) then fn:QName($namespaces($name-prefix), $child-name) else $child-name
         let $child := attribute { $child-qname } { $child-value }
         return if ($child-value) then $child else ()
+
+      (: return an element :)
       else
         let $name-prefix := fn:substring-before($child-name, ":")
         let $child-qname := fn:QName($namespaces($name-prefix), $child-name)
@@ -29,6 +53,10 @@ declare function transform:make-children($target-path as xs:string, $source-node
         return if ($child-children or $child-value) then $child else ()
 };
 
+(: evaluate an XQuery expression within a given context node :)
+(: $xquery: the XQuery expression to evalute as a string :)
+(: $context: the node (e.g. element) to use as context for the XQuery expression :)
+(: returns: the list of atomic values or nodes that the XQuery expression evaluated to :)
 declare function transform:evaluate-xquery($xquery as xs:string?, $context as node()) as item()* {
   if ($xquery) then xquery:eval($xquery, map { "": $context }) else ()
 };
