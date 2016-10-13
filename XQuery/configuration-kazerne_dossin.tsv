@@ -41,8 +41,5 @@ target-path	target-node	source-node	value
 /ead/archdesc/did/	unitdate	.//mdProperty[attribute/text() = "ehri_dates"]	value/text()
 /ead/archdesc/	accruals	.	.//mdProperty[attribute/text() = "ehri_accruals"]/value/text()
 /ead/archdesc/	phystech	.	.//mdProperty[attribute/text() = "ehri_physical_characteristics_and_technical_requirements"]/value/text()
-/ead/archdesc/	daoloc	previewImagePath | thumbnailImagePath	
-/ead/archdesc/daoloc/	@href	.	text()
-/ead/archdesc/daoloc/	@label	.	if (local-name() = "previewImagePath") then "preview" else "thumb"
 /ead/archdesc/did/physdesc/	dimensions	width | height	text()
 /ead/archdesc/did/physdesc/dimensions/	@unit	.	"pixel"

@@ -19,6 +19,27 @@ declare function transform:transform($source-document as document-node(), $confi
     return document { $target-root-node }
 };
 
+declare function transform:check-configuration($configuration as document-node(), $structure-path as xs:string) as item()* {
+  let $structure := map:merge(
+    for $line in file:read-text-lines($structure-path)
+    let $element := fn:substring-before($line, " => ")
+    let $parents := fn:tokenize(fn:substring-after($line, " => "), " | ")
+    return map { $element: map:merge(
+      for $parent in $parents
+      return map { $parent: fn:true() }
+    ) }
+  )
+  
+  for $element in $configuration/csv/record/target-node[fn:not(fn:starts-with(text(), "@"))]/text()
+  let $path := $element/../../target-path/text()
+  let $parent := if ($path = "/") then $path else fn:replace(fn:replace($path, "/$", ""), ".*/", "")
+  return if (fn:not(map:contains($structure, $element))) then
+    fn:error(fn:QName("http://example.org/", "no-such-element"), fn:concat("ERROR: element """, $element, """ does not exist in EAD2002"))
+  else if (fn:not($structure($element)($parent))) then
+    fn:error(fn:QName("http://example.org/", "no-such-parent"), fn:concat("ERROR: element """, $element, """ cannot have element """, $parent, """ as parent in EAD2002"))
+  else ()
+};
+
 (: make children for the given target path in the configuration :)
 (: $target-path: the target path for which to make children as in the configuration :)
 (: $source-node: the node (e.g. element) in the source document that corresponds to the given target path :)
