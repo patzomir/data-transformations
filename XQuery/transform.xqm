@@ -19,7 +19,15 @@ declare function transform:transform($source-document as document-node(), $confi
     return document { $target-root-node }
 };
 
-declare function transform:check-configuration($configuration as document-node(), $structure-path as xs:string) as item()* {
+(: like the above function but checks the structure of the configured target elements :)
+declare function transform:transform($source-document as document-node(), $configuration-path as xs:string, $structure-path as xs:string, $namespaces as map(xs:string, xs:string)) as document-node()* {
+  let $configuration := csv:parse(file:read-text($configuration-path), map { "separator": "tab", "header": "yes", "quotes": "no" })
+  let $errors := transform:check-configuration($configuration, $structure-path)
+    for $target-root-node in transform:make-children("/", $source-document, $configuration, $namespaces)
+    return document { $target-root-node }
+};
+
+declare function transform:check-configuration($configuration as document-node(), $structure-path as xs:string) {
   let $structure := map:merge(
     for $line in file:read-text-lines($structure-path)
     let $element := fn:substring-before($line, " => ")
