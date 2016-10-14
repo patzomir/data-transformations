@@ -11,6 +11,7 @@
   <properties>
     <basex.version>8.2</basex.version>
     <google-api.version>1.22.0</google-api.version>
+    <snakeyaml.version>1.16</snakeyaml.version>
   </properties>
 
   <repositories>
@@ -42,6 +43,12 @@
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-sheets</artifactId>
       <version>v4-rev32-${google-api.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>${snakeyaml.version}</version>
     </dependency>
   </dependencies>
 

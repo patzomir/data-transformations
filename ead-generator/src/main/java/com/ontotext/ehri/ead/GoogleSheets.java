@@ -94,14 +94,14 @@ public class GoogleSheets {
 
     /**
      * Return the values of the given spreadsheet in the given range.
-     * @param spreadsheetID The ID of the spreadsheet.
+     * @param spreadsheetId The ID of the spreadsheet.
      * @param range The range to take.
      * @return The values as a list of lists of objects (rows containing cells containing values).
      * @throws IOException
      */
-    public static List<List<Object>> getValues(String spreadsheetID, String range) throws IOException {
+    public static List<List<Object>> getValues(String spreadsheetId, String range) throws IOException {
         Sheets service = getSheetsService();
-        ValueRange response = service.spreadsheets().values().get(spreadsheetID, range).execute();
+        ValueRange response = service.spreadsheets().values().get(spreadsheetId, range).execute();
         return response.getValues();
     }
 
@@ -129,12 +129,12 @@ public class GoogleSheets {
 
         return valuesString.substring(rowSep.length());
     }
-    
+
     public static void main(String[] args) throws IOException {
-        String spreadsheetID = "1H8bgPSWTvvfICZ6znvFpf4iDCib39KZ0jfgTYHmv5e0";
+        String spreadsheetId = "1H8bgPSWTvvfICZ6znvFpf4iDCib39KZ0jfgTYHmv5e0";
         String range = "A1:D";
 
-        List<List<Object>> values = getValues(spreadsheetID, range);
+        List<List<Object>> values = getValues(spreadsheetId, range);
         System.out.println(toString(values, "\n", "\t"));
     }
 }
