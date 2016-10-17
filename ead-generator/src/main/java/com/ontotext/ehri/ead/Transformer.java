@@ -17,8 +17,8 @@ public class Transformer {
 
     private static String slurpText(String filePath, String encoding) {
         StringBuilder result = new StringBuilder();
-
         InputStream input = Transformer.class.getResourceAsStream(filePath);
+
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, encoding))) {
             String line;
 
@@ -34,18 +34,19 @@ public class Transformer {
         return result.toString();
     }
 
-    public static void transform(org.basex.query.value.map.Map namespaces, String structureFile, String mappingTable, String inputDir, String outputDir) {
+    public static void transform(org.basex.query.value.map.Map namespaces, String structurePath, String configuration, File inputDir, File outputDir) {
         String query = slurpText("/xquery/transform.xqy", ENCODING);
         Context context = new Context();
 
         try (QueryProcessor processor = new QueryProcessor(query, context)) {
             processor.bind("namespaces", namespaces, "map(xs:string, xs:string)");
-            processor.bind("structure-path", structureFile, "xs:string");
-            processor.bind("configuration", mappingTable, "xs:string");
+            processor.bind("structure-path", structurePath, "xs:string");
+            processor.bind("configuration", configuration, "xs:string");
 
-            for (File inputFile : new File(inputDir).listFiles()) {
+            for (File inputFile : inputDir.listFiles()) {
+                File outputFile = new File(outputDir, inputFile.getName());
                 processor.bind("source-path", inputFile.getAbsolutePath(), "xs:string");
-                processor.bind("target-path", new File(new File(outputDir), inputFile.getName()), "xs:string");
+                processor.bind("target-path", outputFile.getAbsolutePath(), "xs:string");
                 processor.value();
             }
 
@@ -63,13 +64,16 @@ public class Transformer {
             Map config = (Map) yaml.load(configStream);
 
             // convert from Java map to BaseX map
-            Map<String, String> namespacesJavaMap = (Map) config.get("namespaces");
+            Map<String, String> namespacesJava = (Map) config.get("namespaces");
             org.basex.query.value.map.Map namespaces = org.basex.query.value.map.Map.EMPTY;
-            for (String key : namespacesJavaMap.keySet()) {
-                String value = namespacesJavaMap.get(key);
+            for (String key : namespacesJava.keySet()) {
+                String value = namespacesJava.get(key);
 
                 try {
-                    namespaces = namespaces.put(new Str(key.getBytes(ENCODING), AtomType.STR), new Str(value.getBytes(ENCODING), AtomType.STR), null);
+                    namespaces = namespaces.put(
+                            new Str(key.getBytes(ENCODING), AtomType.STR),
+                            new Str(value.getBytes(ENCODING), AtomType.STR),
+                            null);
                 } catch (QueryException e) {
                     e.printStackTrace();
                 }
@@ -85,6 +89,8 @@ public class Transformer {
 
             for (Map transformation : (List<Map>) config.get("transformations")) {
                 String institution = (String) transformation.get("institution");
+                System.out.print("transforming files for \"" + institution + "\"...");
+                long start = System.currentTimeMillis();
 
                 // fetch table in TSV format
                 String mappingTableId = (String) transformation.get("mapping-table");
@@ -93,7 +99,9 @@ public class Transformer {
                 String inputDir = (String) transformation.get("input-dir");
                 String outputDir = (String) transformation.get("output-dir");
 
-                transform(namespaces, structureFile, mappingTable, inputDir, outputDir);
+                transform(namespaces, structureFile, mappingTable, new File(inputDir), new File(outputDir));
+                long time = System.currentTimeMillis() - start;
+                System.out.println(" " + time + " ms");
             }
 
         } catch (IOException e) {
