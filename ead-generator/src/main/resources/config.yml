@@ -3,7 +3,7 @@ namespaces:
   "xlink": "http://www.w3.org/1999/xlink"
   "xsi": "http://www.w3.org/2001/XMLSchema-instance"
 
-structure-file: "ead2002.struct"
+structure-file: "/ead2002.struct"
 
 transformations:
   - institution: "Kazerne Dossin"

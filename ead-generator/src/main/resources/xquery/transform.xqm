@@ -13,21 +13,24 @@ module namespace transform = "transform";
 (: $configuration-path: the path to the transformation configuration :)
 (: $namespaces: map from namespace prefix to namespace URI :)
 (: returns: a list of target the document nodes :)
-declare function transform:transform($source-document as document-node(), $configuration-path as xs:string, $namespaces as map(xs:string, xs:string)) as document-node()* {
-  let $configuration := csv:parse(file:read-text($configuration-path), map { "separator": "tab", "header": "yes", "quotes": "no" })
+declare function transform:transform($source-document as document-node(), $configuration as xs:string, $namespaces as map(xs:string, xs:string)) as document-node()* {
+  let $configuration := csv:parse($configuration, map { "separator": "tab", "header": "yes", "quotes": "no" })
     for $target-root-node in transform:make-children("/", $source-document, $configuration, $namespaces)
     return document { $target-root-node }
 };
 
 (: like the above function but checks the structure of the configured target elements :)
-declare function transform:transform($source-document as document-node(), $configuration-path as xs:string, $structure-path as xs:string, $namespaces as map(xs:string, xs:string)) as document-node()* {
-  let $configuration := csv:parse(file:read-text($configuration-path), map { "separator": "tab", "header": "yes", "quotes": "no" })
+declare function transform:transform($source-document as document-node(), $configuration as xs:string, $namespaces as map(xs:string, xs:string), $structure-path as xs:string) as document-node()* {
+  let $configuration := csv:parse($configuration, map { "separator": "tab", "header": "yes", "quotes": "no" })
   let $errors := transform:check-configuration($configuration, $structure-path)
     for $target-root-node in transform:make-children("/", $source-document, $configuration, $namespaces)
     return document { $target-root-node }
 };
 
+(: check the structure of the configured target elements :)
 declare function transform:check-configuration($configuration as document-node(), $structure-path as xs:string) {
+  
+  (: parse the structure file :)
   let $structure := map:merge(
     for $line in file:read-text-lines($structure-path)
     let $element := fn:substring-before($line, " => ")
@@ -38,6 +41,7 @@ declare function transform:check-configuration($configuration as document-node()
     ) }
   )
   
+  (: check if each target element exists and has an appropriate parent :)
   for $element in $configuration/csv/record/target-node[fn:not(fn:starts-with(text(), "@"))]/text()
   let $path := $element/../../target-path/text()
   let $parent := if ($path = "/") then $path else fn:replace(fn:replace($path, "/$", ""), ".*/", "")
