@@ -1,3 +1,7 @@
+body {
+  height: min-content;
+}
+
 div {
   display: flex;
   margin-left: 10px;
