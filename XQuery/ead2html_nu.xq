@@ -1,5 +1,6 @@
 xquery version "3.0";
 
+(: get the translation for an element or attribute in the specified language :)
 declare function local:get-translation(
   $node as node(),
   $translations as document-node(),
@@ -14,6 +15,7 @@ declare function local:get-translation(
   return if ($translation) then $translation else $node-name
 };
 
+(: generate a tooltip for an element :)
 declare function local:generate-tooltip(
   $element as element()
 ) as element()? {
@@ -31,6 +33,7 @@ declare function local:generate-tooltip(
   else ()
 };
 
+(: get the formatting information for an element :)
 declare function local:get-formatting-record(
   $element as element(),
   $formatting as document-node()
@@ -61,6 +64,7 @@ declare function local:get-formatting-record(
     else ()
 };
 
+(: check if an element is a formatting element :)
 declare function local:is-formatting-element(
   $element as element(),
   $formatting as document-node()
@@ -68,6 +72,7 @@ declare function local:is-formatting-element(
   if (local:get-formatting-record($element, $formatting)) then fn:true() else fn:false()
 };
 
+(: transform an attribute to HTML :)
 declare function local:attribute-to-html(
   $attribute as attribute(),
   $translations as document-node(),
@@ -79,6 +84,7 @@ declare function local:attribute-to-html(
   </div>
 };
 
+(: transform a content node (formatting element or text node) to HTML :)
 declare function local:content-to-html(
   $content as node(),
   $formatting as document-node()
@@ -104,6 +110,7 @@ declare function local:content-to-html(
     default return ()
 };
 
+(: transform an element to HTML :)
 declare function local:element-to-html(
   $element as element(),
   $formatting as document-node(),
@@ -137,6 +144,7 @@ declare function local:element-to-html(
     else ()
 };
 
+(: generate a table of contents :)
 declare function local:generate-table-of-contents(
   $root as element()*
 ) as element()? {
@@ -153,6 +161,7 @@ declare function local:generate-table-of-contents(
     else ()
 };
 
+(: transform a document to HTML :)
 declare function local:document-to-html(
   $document-path as xs:string,
   $stylesheet-location as xs:string,
@@ -177,19 +186,23 @@ declare function local:document-to-html(
   }
 };
 
+(: resource locations :)
 let $stylesheet-location := "ead.css"
 let $formatting-path := "/home/georgi/git/data-transformations/XQuery/formatting.tsv"
 let $translations-path := "/home/georgi/git/data-transformations/XQuery/labels.tsv"
 
+(: parameters :)
 let $language := "en"
 let $document-path := "/home/georgi/schem/data/docs/ikg-jerusalem-ead_inject.xml"
 let $html-path := "/home/georgi/schem/test.html"
 
+(: transform the document to HTML :)
 let $formatting := csv:parse(file:read-text($formatting-path),
   map { "separator": "tab", "header": "yes" })
 let $translations := csv:parse(file:read-text($translations-path),
   map { "separator": "tab", "header": "yes" })
 let $html := local:document-to-html($document-path, $stylesheet-location, $formatting, $translations, $language)
 
+(: write the HTML to file :)
 return file:write($html-path, $html,
   map { "method": "html", "media-type": "text/html", "include-content-type": "yes" })
