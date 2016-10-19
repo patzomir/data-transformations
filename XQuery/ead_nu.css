@@ -1,0 +1,41 @@
+body {
+  display: inline-flex;
+}
+
+.table-of-contents {
+  background-color: #99ccff;
+  border: 2px solid #000099;
+  display: inline-block;
+  height: 100%;
+  margin: 5px;
+  overflow-y: scroll;
+  padding: 10px;
+}
+
+.table-of-contents > a {
+  display: block;
+  margin: 5px;
+}
+
+.element {
+  background-color: #ffcc99;
+  border: 2px solid #663300;
+  margin: 5px;
+  padding: 10px;
+}
+
+.meta > .name {
+  font-weight: bold;
+}
+
+.meta > .tooltip {
+  display: none;
+}
+
+.meta.with-tooltip > .name {
+  color: #cc3300;
+}
+
+.meta.with-tooltip:hover > .tooltip {
+  display: inline;
+}

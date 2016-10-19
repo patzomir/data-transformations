@@ -125,8 +125,10 @@ declare function local:element-to-html(
   (: only create non-empty elements :)
   return if ($tooltip or $attributes or $contents or $children)
     then <div class="element { fn:local-name($element) }" id="{ random:uuid() }">
-        <span class="name">{ local:get-translation($element, $translations, $language) }</span>
-        { $tooltip }
+        <div class="meta { if ($tooltip) then "with-tooltip" else "without-tooltip" }">
+          <span class="name">{ local:get-translation($element, $translations, $language) }</span>
+          { $tooltip }
+        </div>
         {
           if ($attributes) then <div class="attributes">
               { for $attribute in $attributes return local:attribute-to-html($attribute, $translations, $language) }
@@ -148,14 +150,14 @@ declare function local:element-to-html(
 declare function local:generate-table-of-contents(
   $root as element()*
 ) as element()? {
-  let $elements-with-tooltip := $root//div[@id and div/@class = "tooltip"]
+  let $elements-with-tooltip := $root//div[@id and div/div/@class = "tooltip"]
   
   (: generate a table of contents if there are any elements with tooltips :)
   return if ($elements-with-tooltip)
     then <div class="table-of-contents">
         {
           for $element-with-tooltip in $elements-with-tooltip
-          return <a href="#{ fn:data($element-with-tooltip/@id) }">{ $element-with-tooltip/span[@class = "name"]/text() }</a>
+          return <a href="#{ fn:data($element-with-tooltip/@id) }">{ $element-with-tooltip/div/span[@class = "name"]/text() }</a>
         }
       </div>
     else ()
