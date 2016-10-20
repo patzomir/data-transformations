@@ -26,9 +26,9 @@ declare function local:generate-tooltip(
   (: only create tooltip if there is at least text :)
   return if ($text) then
     <div class="tooltip">
-      <span class="text">{ fn:data($text) }</span>
       { if ($role) then <span class="role">{ fn:data($role) }</span> else () }
-      { if ($docu) then <span class="docu">{ fn:data($docu) }</span> else () }
+      <span class="text">{ fn:data($text) }</span>
+      { if ($docu) then <a class="docu" href="{ fn:data($docu) }">{ fn:data($docu) }</a> else () }
     </div>
   else ()
 };

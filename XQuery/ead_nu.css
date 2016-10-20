@@ -3,13 +3,15 @@ body {
 }
 
 .table-of-contents {
-  background-color: #99ccff;
-  border: 2px solid #000099;
   display: inline-block;
-  height: 100%;
-  margin: 5px;
+  position: fixed;
   overflow-y: scroll;
+  height: 100%;
+  width: 16%;
+  margin: 5px;
   padding: 10px;
+  background-color: azure;
+  border: 2px solid midnightblue;
 }
 
 .table-of-contents > a {
@@ -17,25 +19,145 @@ body {
   margin: 5px;
 }
 
+.table-of-contents > a:link {
+  color: mediumblue;
+}
+
+.table-of-contents > a:hover {
+  color: darkorchid;
+}
+
+body > .element {
+  position: absolute;
+  right: 0px;
+  width: 80%;
+}
+
 .element {
-  background-color: #ffcc99;
-  border: 2px solid #663300;
   margin: 5px;
   padding: 10px;
+  background-color: snow;
+  border: 2px solid midnightblue;
+  border-radius: 10px;
+}
+
+.element:target {
+  background-color: pink;
+  animation-name: background-flash;
+  animation-duration: 2s;
+}
+
+.meta {
+  display: inline-flex;
+  margin-left: 5px;
 }
 
 .meta > .name {
+  padding: 5px;
   font-weight: bold;
+  border-radius: 10px;
+  color: darkgreen;
+}
+
+.meta.with-tooltip > .name {
+  color: firebrick;
+  animation-name: text-flash;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
 }
 
 .meta > .tooltip {
   display: none;
-}
-
-.meta.with-tooltip > .name {
-  color: #cc3300;
+  z-index: 1;
+  position: relative;
+  top: -2px;
+  margin-left: 15px;
+  padding: 5px;
+  border: 2px solid darkred;
+  border-radius: 10px;
+  color: darkred;
+  background-color: mistyrose;
 }
 
 .meta.with-tooltip:hover > .tooltip {
-  display: inline;
+  display: inline-block;
+  animation-name: background-flash;
+  animation-duration: 1s;
+}
+
+.tooltip:after {
+  content: " ";
+  position: absolute;
+  top: 15px;
+  right: 100%;
+  margin-top: -10px;
+  border: 10px solid;
+  border-color: transparent darkred transparent transparent;
+}
+
+.tooltip > .text {
+  display: block;
+}
+
+.tooltip > .role {
+  display: block;
+  font-weight: bold;
+}
+
+.tooltip > .role:before {
+  content: "[";
+}
+
+.tooltip > .role:after {
+  content: "]";
+}
+
+.tooltip > .docu {
+  display: block;
+}
+
+.attributes {
+  display: table;
+  margin: 5px;
+  padding: 10px;
+  background: aliceblue;
+  border: 1px solid royalblue;
+  border-left: 4px solid royalblue;
+  color: navy;
+}
+
+.attributes > .attribute {
+  display: table-row;
+}
+
+.attributes > .attribute > .name {
+  display: table-cell;
+  font-weight: bold;
+}
+
+.attributes > .attribute > .value {
+  display: table-cell;
+  padding-left: 25px;
+}
+
+.contents {
+  margin: 5px;
+  padding: 5px;
+  background: mintcream;
+  border: 1px solid teal;
+  border-left: 4px solid teal;
+  color: darkslategray;
+}
+
+@keyframes background-flash {
+  from {
+    background-color: crimson;
+  }
+}
+
+@keyframes text-flash {
+  from {
+    background-color: salmon;
+    color: red;
+  }
 }
