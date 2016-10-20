@@ -120,7 +120,7 @@ body > .element {
   display: table;
   margin: 5px;
   padding: 10px;
-  background: aliceblue;
+  background: linear-gradient(aliceblue, white, aliceblue);
   border: 1px solid royalblue;
   border-left: 4px solid royalblue;
   color: navy;
@@ -143,7 +143,7 @@ body > .element {
 .contents {
   margin: 5px;
   padding: 5px;
-  background: mintcream;
+  background: linear-gradient(mintcream, white, mintcream);
   border: 1px solid teal;
   border-left: 4px solid teal;
   color: darkslategray;
