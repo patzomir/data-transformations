@@ -175,6 +175,7 @@ declare function ead2html:document-to-html(
   $translations as document-node(),
   $language as xs:string
 ) as document-node() {
+  let $document-name := fn:replace($document-path, fn:concat(".*", file:dir-separator()), "")
   let $root := for $element in fn:doc($document-path)/*
     return ead2html:element-to-html($element, $formatting, $translations, $language)
   
@@ -182,7 +183,7 @@ declare function ead2html:document-to-html(
     <html>
       <head>
         <link rel="stylesheet" href="{ $stylesheet-location }" />
-        <title>{ $document-path }</title>
+        <title>EAD Preview: { $document-name }</title>
       </head>
       <body>
         { ead2html:generate-table-of-contents($root) }
