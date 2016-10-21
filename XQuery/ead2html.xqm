@@ -1,13 +1,16 @@
 xquery version "3.0";
 
-declare function local:legalize-text(
+module namespace ead2html = "ead2html";
+
+(: ensure text contains only legal characters :)
+declare function ead2html:legalize-text(
   $text as xs:string
 ) as xs:string {
   fn:replace($text, "[\p{IsC}]", "")
 };
 
 (: get the translation for an element or attribute in the specified language :)
-declare function local:get-translation(
+declare function ead2html:get-translation(
   $node as node(),
   $translations as document-node(),
   $language as xs:string
@@ -22,7 +25,7 @@ declare function local:get-translation(
 };
 
 (: generate a tooltip for an element :)
-declare function local:generate-tooltip(
+declare function ead2html:generate-tooltip(
   $element as element()
 ) as element()? {
   let $text := $element/@svrl_text
@@ -40,7 +43,7 @@ declare function local:generate-tooltip(
 };
 
 (: get the formatting information for an element :)
-declare function local:get-formatting-record(
+declare function ead2html:get-formatting-record(
   $element as element(),
   $formatting as document-node()
 ) as element()? {
@@ -71,39 +74,39 @@ declare function local:get-formatting-record(
 };
 
 (: check if an element is a formatting element :)
-declare function local:is-formatting-element(
+declare function ead2html:is-formatting-element(
   $element as element(),
   $formatting as document-node()
 ) as xs:boolean {
-  if (local:get-formatting-record($element, $formatting)) then fn:true() else fn:false()
+  if (ead2html:get-formatting-record($element, $formatting)) then fn:true() else fn:false()
 };
 
 (: transform an attribute to HTML :)
-declare function local:attribute-to-html(
+declare function ead2html:attribute-to-html(
   $attribute as attribute(),
   $translations as document-node(),
   $language as xs:string
 ) as element() {
   <div class="attribute { fn:local-name($attribute) }">
-    <span class="name">{ local:get-translation($attribute, $translations, $language) }</span>
-    <span class="value">{ local:legalize-text(fn:data($attribute)) }</span>
+    <span class="name">{ ead2html:get-translation($attribute, $translations, $language) }</span>
+    <span class="value">{ ead2html:legalize-text(fn:data($attribute)) }</span>
   </div>
 };
 
 (: transform a content node (formatting element or text node) to HTML :)
-declare function local:content-to-html(
+declare function ead2html:content-to-html(
   $content as node(),
   $formatting as document-node()
 ) as element()? {
   typeswitch($content)
     
     (: if the content node is a text node, simply return it :)
-    case text() return <span class="text">{ local:legalize-text($content) }</span>
+    case text() return <span class="text">{ ead2html:legalize-text($content) }</span>
     
     (: if the content node is an element, format it and return it :)
     case element() return
-      let $formatting-record := local:get-formatting-record($content, $formatting)
-      let $text := local:legalize-text(fn:data($content))
+      let $formatting-record := ead2html:get-formatting-record($content, $formatting)
+      let $text := ead2html:legalize-text(fn:data($content))
       return if ($formatting-record and $text)
         then element { $formatting-record/target-element/text() } {
           attribute class { "formatting-element" },
@@ -117,43 +120,43 @@ declare function local:content-to-html(
 };
 
 (: transform an element to HTML :)
-declare function local:element-to-html(
+declare function ead2html:element-to-html(
   $element as element(),
   $formatting as document-node(),
   $translations as document-node(),
   $language as xs:string
 ) as element()? {
-  let $tooltip := local:generate-tooltip($element)
+  let $tooltip := ead2html:generate-tooltip($element)
   let $attributes := $element/@*[fn:not(fn:starts-with(fn:local-name(), "svrl_"))]
-  let $contents := $element/text() | $element/*[local:is-formatting-element(., $formatting) and text()]
-  let $children := $element/*[fn:not(local:is-formatting-element(., $formatting))]
+  let $contents := $element/text() | $element/*[ead2html:is-formatting-element(., $formatting) and text()]
+  let $children := $element/*[fn:not(ead2html:is-formatting-element(., $formatting))]
   
   (: only create non-empty elements :)
   return if ($tooltip or $attributes or $contents or $children)
     then <div class="element { fn:local-name($element) }" id="{ random:uuid() }">
         <div class="meta { if ($tooltip) then "with-tooltip" else "without-tooltip" }">
-          <span class="name">{ local:get-translation($element, $translations, $language) }</span>
+          <span class="name">{ ead2html:get-translation($element, $translations, $language) }</span>
           { $tooltip }
         </div>
         {
           if ($attributes) then <div class="attributes">
-              { for $attribute in $attributes return local:attribute-to-html($attribute, $translations, $language) }
+              { for $attribute in $attributes return ead2html:attribute-to-html($attribute, $translations, $language) }
             </div>
           else ()
         }
         {
           if ($contents) then <div class="contents">
-              { for $content in $contents return local:content-to-html($content, $formatting) }
+              { for $content in $contents return ead2html:content-to-html($content, $formatting) }
             </div>
           else ()
         }
-        { for $child in $children return local:element-to-html($child, $formatting, $translations, $language) }
+        { for $child in $children return ead2html:element-to-html($child, $formatting, $translations, $language) }
       </div>
     else ()
 };
 
 (: generate a table of contents :)
-declare function local:generate-table-of-contents(
+declare function ead2html:generate-table-of-contents(
   $root as element()*
 ) as element()? {
   <div class="table-of-contents">
@@ -165,7 +168,7 @@ declare function local:generate-table-of-contents(
 };
 
 (: transform a document to HTML :)
-declare function local:document-to-html(
+declare function ead2html:document-to-html(
   $document-path as xs:string,
   $stylesheet-location as xs:string,
   $formatting as document-node(),
@@ -173,7 +176,7 @@ declare function local:document-to-html(
   $language as xs:string
 ) as document-node() {
   let $root := for $element in fn:doc($document-path)/*
-    return local:element-to-html($element, $formatting, $translations, $language)
+    return ead2html:element-to-html($element, $formatting, $translations, $language)
   
   return document {
     <html>
@@ -182,32 +185,9 @@ declare function local:document-to-html(
         <title>{ $document-path }</title>
       </head>
       <body>
-        { local:generate-table-of-contents($root) }
+        { ead2html:generate-table-of-contents($root) }
         { $root }
       </body>
     </html>
   }
 };
-
-(: serialization options :)
-let $csv_options := map { "separator": "tab", "header": "yes" }
-let $html_options := map { "method": "html", "media-type": "text/html", "include-content-type": "yes" }
-
-(: resource locations :)
-let $stylesheet-location := "../ead.css"
-let $formatting-path := "/home/georgi/git/data-transformations/XQuery/formatting.tsv"
-let $translations-path := "/home/georgi/git/data-transformations/XQuery/labels.tsv"
-
-(: script parameters :)
-let $language := "de"
-let $document-dir := "/home/georgi/schem/injected/"
-let $html-dir := "/home/georgi/schem/output/"
-
-let $formatting := csv:parse(file:read-text($formatting-path), $csv_options)
-let $translations := csv:parse(file:read-text($translations-path), $csv_options)
-
-for $document-path-relative in file:list($document-dir, fn:false(), "*.xml,*.XML")
-  let $document-path := fn:concat($document-dir, $document-path-relative)
-  let $html-path := fn:concat($html-dir, fn:replace($document-path-relative, ".(xml|XML)$", ".html"))
-  let $html := local:document-to-html($document-path, $stylesheet-location, $formatting, $translations, $language)
-  return file:write($html-path, $html, $html_options)
