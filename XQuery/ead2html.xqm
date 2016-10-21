@@ -37,7 +37,7 @@ declare function ead2html:generate-tooltip(
     <div class="tooltip">
       { if ($role) then <span class="role">{ fn:data($role) }</span> else () }
       <span class="text">{ fn:data($text) }</span>
-      { if ($docu) then <a class="docu" href="{ fn:data($docu) }">{ fn:data($docu) }</a> else () }
+      { if ($docu) then <a class="docu" href="{ fn:data($docu) }" target="_blank">{ fn:data($docu) }</a> else () }
     </div>
   else ()
 };
