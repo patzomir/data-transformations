@@ -1,5 +1,11 @@
 xquery version "3.0";
 
+declare function local:legalize-text(
+  $text as xs:string
+) as xs:string {
+  fn:replace($text, "[\p{IsC}]", "")
+};
+
 (: get the translation for an element or attribute in the specified language :)
 declare function local:get-translation(
   $node as node(),
@@ -80,7 +86,7 @@ declare function local:attribute-to-html(
 ) as element() {
   <div class="attribute { fn:local-name($attribute) }">
     <span class="name">{ local:get-translation($attribute, $translations, $language) }</span>
-    <span class="value">{ fn:data($attribute) }</span>
+    <span class="value">{ local:legalize-text(fn:data($attribute)) }</span>
   </div>
 };
 
@@ -92,12 +98,12 @@ declare function local:content-to-html(
   typeswitch($content)
     
     (: if the content node is a text node, simply return it :)
-    case text() return <span class="text">{ $content }</span>
+    case text() return <span class="text">{ local:legalize-text($content) }</span>
     
     (: if the content node is an element, format it and return it :)
     case element() return
       let $formatting-record := local:get-formatting-record($content, $formatting)
-      let $text := fn:data($content)
+      let $text := local:legalize-text(fn:data($content))
       return if ($formatting-record and $text)
         then element { $formatting-record/target-element/text() } {
           attribute class { "formatting-element" },
@@ -190,7 +196,7 @@ let $translations-path := "/home/georgi/git/data-transformations/XQuery/labels.t
 
 (: parameters :)
 let $language := "en"
-let $document-path := "/home/georgi/schem/data/docs/ikg-jerusalem-ead_inject.xml"
+let $document-path := "/home/georgi/schem/data/docs/personalpapers_injected.xml"
 let $html-path := "/home/georgi/schem/test.html"
 
 (: transform the document to HTML :)
