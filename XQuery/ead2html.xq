@@ -1,102 +1,205 @@
 xquery version "3.0";
 
-declare namespace ead = "urn:isbn:1-931666-22-9";
-
-declare function local:legalize-text($text as xs:string) as xs:string {
-  replace($text, "[\p{IsC}]", "")
+(: get the translation for an element or attribute in the specified language :)
+declare function local:get-translation(
+  $node as node(),
+  $translations as document-node(),
+  $language as xs:string
+) as xs:string {
+  let $node-name := fn:local-name($node)
+  let $translation := fn:zero-or-one(
+    $translations/csv/record[node-name/text() = $node-name]/*[fn:local-name() = $language]/text()
+  )
+  
+  (: if there is a translation, return it; otherwise, return the node name :)
+  return if ($translation) then $translation else $node-name
 };
 
-declare function local:field2class($field as xs:string) as xs:string {
-  if (matches($field, "c[0-1][0-9]"))
-  then "component"
-  else $field
-};
-
-declare function local:field2label($field as xs:string, $language as xs:string, $labels as document-node()) as xs:string {
-  let $label := $labels/csv/record[field/text()=$field]/*[local-name() = $language]/text()
-  return
-    if ($label)
-    then $label
-    else $field
-};
-
-declare function local:transform-element($element as element(), $special-tags as xs:string*, $language as xs:string, $labels as document-node()) as element() {
-  let $tag := local-name($element)
-  let $role := $element/@svrl_role
+(: generate a tooltip for an element :)
+declare function local:generate-tooltip(
+  $element as element()
+) as element()? {
   let $text := $element/@svrl_text
-  return
-    <div class="{local:field2class($tag), if ($role and $text) then "fail" else (if ($element/@*) then "info" else())}">
-      <div class="meta">
-        <span class="label">{local:field2label($tag, $language, $labels)}</span>
+  let $role := $element/@svrl_role
+  let $docu := $element/@svrl_docu
+  
+  (: only create tooltip if there is at least text :)
+  return if ($text) then
+    <div class="tooltip">
+      { if ($role) then <span class="role">{ fn:data($role) }</span> else () }
+      <span class="text">{ fn:data($text) }</span>
+      { if ($docu) then <a class="docu" href="{ fn:data($docu) }">{ fn:data($docu) }</a> else () }
+    </div>
+  else ()
+};
+
+(: get the formatting information for an element :)
+declare function local:get-formatting-record(
+  $element as element(),
+  $formatting as document-node()
+) as element()? {
+  let $formatting-records := $formatting/csv/record[source-element/text() = fn:local-name($element)]
+  
+  (: get the record that matches by element, attribute and atttribute value :)
+  let $matches-by-value := fn:zero-or-one(
+    for $attribute in $element/@*
+    return $formatting-records[source-attribute/text() = fn:local-name($attribute) and source-attribute-value/text() = fn:data($attribute)]
+  )
+  
+  (: get the record that matches by element and attribute :)
+  let $matches-by-attribute := fn:zero-or-one(
+    for $attribute in $element/@*
+    return $formatting-records[source-attribute/text() = fn:local-name($attribute) and fn:not(source-attribute-value/text())]
+  )
+  
+  (: get the record that matches by element :)
+  let $matches-by-element := fn:zero-or-one(
+    $formatting-records[fn:not(source-attribute/text()) and fn:not(source-attribute-value/text())]
+  )
+  
+  (: return the best-matching record :)
+  return if ($matches-by-value) then $matches-by-value
+    else if ($matches-by-attribute) then $matches-by-attribute
+    else if ($matches-by-element) then $matches-by-element
+    else ()
+};
+
+(: check if an element is a formatting element :)
+declare function local:is-formatting-element(
+  $element as element(),
+  $formatting as document-node()
+) as xs:boolean {
+  if (local:get-formatting-record($element, $formatting)) then fn:true() else fn:false()
+};
+
+(: transform an attribute to HTML :)
+declare function local:attribute-to-html(
+  $attribute as attribute(),
+  $translations as document-node(),
+  $language as xs:string
+) as element() {
+  <div class="attribute { fn:local-name($attribute) }">
+    <span class="name">{ local:get-translation($attribute, $translations, $language) }</span>
+    <span class="value">{ fn:data($attribute) }</span>
+  </div>
+};
+
+(: transform a content node (formatting element or text node) to HTML :)
+declare function local:content-to-html(
+  $content as node(),
+  $formatting as document-node()
+) as element()? {
+  typeswitch($content)
+    
+    (: if the content node is a text node, simply return it :)
+    case text() return <span class="text">{ $content }</span>
+    
+    (: if the content node is an element, format it and return it :)
+    case element() return
+      let $formatting-record := local:get-formatting-record($content, $formatting)
+      let $text := fn:data($content)
+      return if ($formatting-record and $text)
+        then element { $formatting-record/target-element/text() } {
+          attribute class { "formatting-element" },
+          attribute style { $formatting-record/target-style/text() },
+          $text
+        }
+        else ()
+    
+    (: should not happen :)
+    default return ()
+};
+
+(: transform an element to HTML :)
+declare function local:element-to-html(
+  $element as element(),
+  $formatting as document-node(),
+  $translations as document-node(),
+  $language as xs:string
+) as element()? {
+  let $tooltip := local:generate-tooltip($element)
+  let $attributes := $element/@*[fn:not(fn:starts-with(fn:local-name(), "svrl_"))]
+  let $contents := $element/text() | $element/*[local:is-formatting-element(., $formatting)]
+  let $children := $element/*[fn:not(local:is-formatting-element(., $formatting))]
+  
+  (: only create non-empty elements :)
+  return if ($tooltip or $attributes or $contents or $children)
+    then <div class="element { fn:local-name($element) }" id="{ random:uuid() }">
+        <div class="meta { if ($tooltip) then "with-tooltip" else "without-tooltip" }">
+          <span class="name">{ local:get-translation($element, $translations, $language) }</span>
+          { $tooltip }
+        </div>
         {
-          if ($element/@*)
-          then
-          <table class="tooltip">
-          {
-            if ($role and $text)
-            then
-              <tr class="message">
-                <td class="role">{data($role)}</td>
-                <td class="text">{data($text)}</td>
-              </tr>
-            else (),
-            
-            for $attribute in $element/@*
-              let $attribute-name := local-name($attribute)
-              return
-                if (not($attribute-name = "svrl_role" or $attribute-name = "svrl_text"))
-                then
-                  <tr class="attribute">
-                    <td class="label">{local:field2label($attribute-name, $language, $labels)}</td>
-                    <td class="value">{data($attribute)}</td>
-                  </tr>
-                else ()
-          }
-          </table>
+          if ($attributes) then <div class="attributes">
+              { for $attribute in $attributes return local:attribute-to-html($attribute, $translations, $language) }
+            </div>
           else ()
         }
+        {
+          if ($contents) then <div class="contents">
+              { for $content in $contents return local:content-to-html($content, $formatting) }
+            </div>
+          else ()
+        }
+        { for $child in $children return local:element-to-html($child, $formatting, $translations, $language) }
       </div>
-      <div class="content">
-      {
-        for $child in $element/ead:*
-        let $child-tag := local-name($child)
-        return
-          if (index-of($special-tags, $child-tag))
-          then <span class="text">{local:legalize-text(data($child))}</span>
-          else local:transform-element($child, $special-tags, $language, $labels),
-        
-        for $text in $element/text()
-        return <span class="text">{local:legalize-text($text)}</span>
-      }
-      </div>
-    </div>
+    else ()
 };
 
-declare function local:transform-document($ead as document-node(), $special-tags as xs:string*, $language as xs:string, $labels as document-node()) as element() {
-  <html>
-    <head>
-      <link rel="stylesheet" href="ead.css"/>
-      <title>{data($ead/ead:ead/ead:eadheader/ead:eadid)}</title>
-    </head>
-    <body>
+(: generate a table of contents :)
+declare function local:generate-table-of-contents(
+  $root as element()*
+) as element()? {
+  <div class="table-of-contents">
     {
-      local:transform-element($ead/ead:ead/ead:eadheader, $special-tags, $language, $labels),
-      for $component in $ead/ead:ead/ead:archdesc/ead:dsc/ead:c01
-      return local:transform-element($component, $special-tags, $language, $labels)
+      for $element-with-tooltip in $root//div[@id and div/div/@class = "tooltip"]
+      return <a href="#{ fn:data($element-with-tooltip/@id) }">{ $element-with-tooltip/div/span[@class = "name"]/text() }</a>
     }
-    </body>
-  </html>
+  </div>
 };
 
-let $ead-path := "/home/georgi/schem/data/docs/ikg-jerusalem-ead_inject.xml"
-let $labels-path := "/home/georgi/schem/labels.tsv"
+(: transform a document to HTML :)
+declare function local:document-to-html(
+  $document-path as xs:string,
+  $stylesheet-location as xs:string,
+  $formatting as document-node(),
+  $translations as document-node(),
+  $language as xs:string
+) as document-node() {
+  let $root := for $element in fn:doc($document-path)/*
+    return local:element-to-html($element, $formatting, $translations, $language)
+  
+  return document {
+    <html>
+      <head>
+        <link rel="stylesheet" href="{ $stylesheet-location }" />
+        <title>{ $document-path }</title>
+      </head>
+      <body>
+        { local:generate-table-of-contents($root) }
+        { $root }
+      </body>
+    </html>
+  }
+};
+
+(: resource locations :)
+let $stylesheet-location := "ead.css"
+let $formatting-path := "/home/georgi/git/data-transformations/XQuery/formatting.tsv"
+let $translations-path := "/home/georgi/git/data-transformations/XQuery/labels.tsv"
+
+(: parameters :)
+let $language := "en"
+let $document-path := "/home/georgi/schem/data/docs/ikg-jerusalem-ead_inject.xml"
 let $html-path := "/home/georgi/schem/test.html"
 
-let $language := "en"
-let $special-tags := ("p")
+(: transform the document to HTML :)
+let $formatting := csv:parse(file:read-text($formatting-path),
+  map { "separator": "tab", "header": "yes" })
+let $translations := csv:parse(file:read-text($translations-path),
+  map { "separator": "tab", "header": "yes" })
+let $html := local:document-to-html($document-path, $stylesheet-location, $formatting, $translations, $language)
 
-let $ead := doc($ead-path)
-let $labels := csv:parse(file:read-text($labels-path), map {"separator": "tab", "header": "yes"})
-
-let $html := local:transform-document($ead, $special-tags, $language, $labels)
-return file:write($html-path, $html, map {"method": "html", "media-type": "text/html", "encoding": "UTF-8", "include-content-type": "yes"})
+(: write the HTML to file :)
+return file:write($html-path, $html,
+  map { "method": "html", "media-type": "text/html", "include-content-type": "yes" })
