@@ -189,23 +189,25 @@ declare function local:document-to-html(
   }
 };
 
+(: serialization options :)
+let $csv_options := map { "separator": "tab", "header": "yes" }
+let $html_options := map { "method": "html", "media-type": "text/html", "include-content-type": "yes" }
+
 (: resource locations :)
-let $stylesheet-location := "ead.css"
+let $stylesheet-location := "../ead.css"
 let $formatting-path := "/home/georgi/git/data-transformations/XQuery/formatting.tsv"
 let $translations-path := "/home/georgi/git/data-transformations/XQuery/labels.tsv"
 
-(: parameters :)
+(: script parameters :)
 let $language := "de"
-let $document-path := "/home/georgi/schem/data/docs/personalpapers_injected.xml"
-let $html-path := "/home/georgi/schem/test.html"
+let $document-dir := "/home/georgi/schem/injected/"
+let $html-dir := "/home/georgi/schem/output/"
 
-(: transform the document to HTML :)
-let $formatting := csv:parse(file:read-text($formatting-path),
-  map { "separator": "tab", "header": "yes" })
-let $translations := csv:parse(file:read-text($translations-path),
-  map { "separator": "tab", "header": "yes" })
-let $html := local:document-to-html($document-path, $stylesheet-location, $formatting, $translations, $language)
+let $formatting := csv:parse(file:read-text($formatting-path), $csv_options)
+let $translations := csv:parse(file:read-text($translations-path), $csv_options)
 
-(: write the HTML to file :)
-return file:write($html-path, $html,
-  map { "method": "html", "media-type": "text/html", "include-content-type": "yes" })
+for $document-path-relative in file:list($document-dir, fn:false(), "*.xml,*.XML")
+  let $document-path := fn:concat($document-dir, $document-path-relative)
+  let $html-path := fn:concat($html-dir, fn:replace($document-path-relative, ".(xml|XML)$", ".html"))
+  let $html := local:document-to-html($document-path, $stylesheet-location, $formatting, $translations, $language)
+  return file:write($html-path, $html, $html_options)
