@@ -4,6 +4,52 @@ body {
   padding: 0.25vw;
 }
 
+.index {
+  display: table;
+  border-spacing: 0px 0.5vw;
+  padding-left: 0.5vw;
+  padding-right: 0.5vw;
+  background-color: floralwhite;
+}
+
+.index > .index-item {
+  display: table-row;
+}
+
+.index > .index-item.without-errors {
+  background: linear-gradient(floralwhite, palegreen, floralwhite)
+}
+
+.index > .index-item.with-errors {
+  background: linear-gradient(floralwhite, lightsalmon, floralwhite)
+}
+
+.index > .index-item > a {
+  display: table-cell;
+  padding: 0.5vw;
+}
+
+.index > .index-item > a:link {
+  color: mediumblue;
+}
+
+.index > .index-item > a:hover {
+  color: darkorchid;
+}
+
+.index > .index-item > span {
+  display: table-cell;
+  padding: 0.5vw;
+}
+
+.index > .index-item.without-errors > span {
+  color: darkgreen;
+}
+
+.index > .index-item.with-errors > span {
+  color: darkred;
+}
+
 .table-of-contents {
   display: inline-block;
   position: fixed;
