@@ -7,7 +7,7 @@ body {
   position: fixed;
   overflow-y: scroll;
   height: 95vh;
-  width: 16%;
+  width: 15vw;
   margin: 5px;
   padding: 10px;
   background-color: azure;
@@ -30,7 +30,7 @@ body {
 body > .element {
   position: absolute;
   right: 0px;
-  width: 80%;
+  width: 80vw;
 }
 
 .element {
