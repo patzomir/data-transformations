@@ -125,7 +125,7 @@ declare function local:element-to-html(
 ) as element()? {
   let $tooltip := local:generate-tooltip($element)
   let $attributes := $element/@*[fn:not(fn:starts-with(fn:local-name(), "svrl_"))]
-  let $contents := $element/text() | $element/*[local:is-formatting-element(., $formatting)]
+  let $contents := $element/text() | $element/*[local:is-formatting-element(., $formatting) and text()]
   let $children := $element/*[fn:not(local:is-formatting-element(., $formatting))]
   
   (: only create non-empty elements :)
@@ -195,7 +195,7 @@ let $formatting-path := "/home/georgi/git/data-transformations/XQuery/formatting
 let $translations-path := "/home/georgi/git/data-transformations/XQuery/labels.tsv"
 
 (: parameters :)
-let $language := "en"
+let $language := "de"
 let $document-path := "/home/georgi/schem/data/docs/personalpapers_injected.xml"
 let $html-path := "/home/georgi/schem/test.html"
 
