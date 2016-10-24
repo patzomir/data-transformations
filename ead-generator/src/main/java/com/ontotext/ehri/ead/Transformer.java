@@ -34,7 +34,7 @@ public class Transformer {
         return result.toString();
     }
 
-    public static void transform(org.basex.query.value.map.Map namespaces, String structurePath, String configuration, File inputDir, File outputDir) {
+    public static void transform(org.basex.query.value.map.Map namespaces, String structurePath, String configuration, String inputDir, String outputDir) {
         String query = slurpText("/xquery/transform.xqy", ENCODING);
         Context context = new Context();
 
@@ -42,13 +42,9 @@ public class Transformer {
             processor.bind("namespaces", namespaces, "map(xs:string, xs:string)");
             processor.bind("structure-path", structurePath, "xs:string");
             processor.bind("configuration", configuration, "xs:string");
-
-            for (File inputFile : inputDir.listFiles()) {
-                File outputFile = new File(outputDir, inputFile.getName());
-                processor.bind("source-path", inputFile.getAbsolutePath(), "xs:string");
-                processor.bind("target-path", outputFile.getAbsolutePath(), "xs:string");
-                processor.value();
-            }
+            processor.bind("source-dir", inputDir, "xs:string");
+            processor.bind("target-dir", outputDir, "xs:string");
+            processor.value();
 
         } catch (QueryException e) {
             e.printStackTrace();
@@ -99,7 +95,7 @@ public class Transformer {
                 String inputDir = (String) transformation.get("input-dir");
                 String outputDir = (String) transformation.get("output-dir");
 
-                transform(namespaces, structureFile, mappingTable, new File(inputDir), new File(outputDir));
+                transform(namespaces, structureFile, mappingTable, inputDir, outputDir);
                 long time = System.currentTimeMillis() - start;
                 System.out.println(" " + time + " ms");
             }
