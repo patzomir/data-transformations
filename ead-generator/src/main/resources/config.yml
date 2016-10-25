@@ -1,0 +1,18 @@
+namespaces:
+  "": "urn:isbn:1-931666-22-9"
+  "xlink": "http://www.w3.org/1999/xlink"
+  "xsi": "http://www.w3.org/2001/XMLSchema-instance"
+
+structure-file: "/ead2002.struct"
+
+#transformations:
+#  - institution: "Kazerne Dossin"
+#    mapping-table: "1H8bgPSWTvvfICZ6znvFpf4iDCib39KZ0jfgTYHmv5e0"
+#    input-dir: "/home/georgi/Downloads/kazerne-dossin-input/"
+#    output-dir: "/home/georgi/Downloads/kazerne-dossin-output/"
+
+transformations:
+  - institution: "USHMM"
+    mapping-table: "14aJXIuG8zLPZH6Q5pIXc17HKaOi8hYoxPFuMqUpu93Y"
+    input-dir: "/home/georgi/Downloads/ushmm-input/"
+    output-dir: "/home/georgi/Downloads/ushmm-output/"
