@@ -15,7 +15,7 @@
   <version>0.0.1-SNAPSHOT</version>
 
   <properties>
-    <basex.version>8.2</basex.version>
+    <basex.version>8.5</basex.version>
     <google-api.version>1.22.0</google-api.version>
     <snakeyaml.version>1.16</snakeyaml.version>
     <junit.version>4.12</junit.version>
