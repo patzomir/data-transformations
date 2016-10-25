@@ -78,7 +78,7 @@ declare function transform:check-configuration(
 (: returns: a list of children nodes (attributes or elements) for the given target path :)
 declare function transform:make-children(
   $target-path as xs:string,
-  $source-node as node(),
+  $source-node as item(),
   $configuration as document-node(),
   $namespaces as map(xs:string, xs:string)
 ) as node()* {
@@ -115,7 +115,7 @@ declare function transform:make-children(
 (: returns: the list of atomic values or nodes that the XQuery expression evaluated to :)
 declare function transform:evaluate-xquery(
   $xquery as xs:string?,
-  $context as node()
+  $context as item()
 ) as item()* {
   if ($xquery) then xquery:eval($xquery, map { "": $context }) else ()
 };
