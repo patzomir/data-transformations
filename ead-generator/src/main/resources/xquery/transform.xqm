@@ -106,7 +106,7 @@ declare function transform:make-children(
         let $child-qname := fn:QName($namespaces($name-prefix), $child-name)
         let $child-children := transform:make-children(fn:concat($target-path, $child-name, "/"), $child-source-node, $configuration, $namespaces)
         let $child := element { $child-qname } { $child-children, $child-value }
-        return if ($child-children or fn:count($child-value > 0) or $child-value) then $child else ()
+        return if ($child-children or transform:efb($child-value)) then $child else ()
 };
 
 (: evaluate an XQuery expression within a given context node :)
@@ -118,4 +118,13 @@ declare function transform:evaluate-xquery(
   $context as item()
 ) as item()* {
   if ($xquery) then xquery:eval($xquery, map { "": $context }) else ()
+};
+
+declare function transform:efb(
+  $item as item()*
+) as xs:boolean {
+  if (fn:count($item) > 1) then
+    let $ones := for $element in $item return if (transform:efb($element)) then 1 else ()
+    return (fn:count($ones) > 0)
+  else fn:boolean($item)
 };
