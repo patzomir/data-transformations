@@ -1,91 +1,217 @@
 body {
-  height: min-content;
+  display: inline-flex;
+  font-size: 0.75vw;
+  padding: 0.25vw;
 }
 
-div {
-  display: flex;
-  margin-left: 10px;
+.index {
+  display: table;
+  border-spacing: 0px 0.5vw;
+  padding-left: 0.5vw;
+  padding-right: 0.5vw;
+  background-color: floralwhite;
 }
 
-.eadheader {
-  background-color: seashell;
-  border: 1px solid black;
-  border-radius: 5px;
-  margin-bottom: 10px;
-  padding: 5px;
+.index > .index-item {
+  display: table-row;
 }
 
-.component {
-  background-color: ivory;
-  border: 1px solid black;
-  border-radius: 5px;
-  margin-bottom: 5px;
-  padding: 5px;
+.index > .index-item.without-errors {
+  background: linear-gradient(floralwhite, palegreen, floralwhite)
 }
 
-.content {
+.index > .index-item.with-errors {
+  background: linear-gradient(floralwhite, lightsalmon, floralwhite)
+}
+
+.index > .index-item > a {
+  display: table-cell;
+  padding: 0.5vw;
+}
+
+.index > .index-item > a:link {
+  color: mediumblue;
+}
+
+.index > .index-item > a:hover {
+  color: darkorchid;
+}
+
+.index > .index-item > span {
+  display: table-cell;
+  padding: 0.5vw;
+}
+
+.index > .index-item.without-errors > span {
+  color: darkgreen;
+}
+
+.index > .index-item.with-errors > span {
+  color: darkred;
+}
+
+.table-of-contents {
+  display: inline-block;
+  position: fixed;
+  overflow-y: scroll;
+  height: 95vh;
+  width: 15vw;
+  padding: 0.5vw;
+  background-color: azure;
+  border: 0.15vw solid midnightblue;
+}
+
+.table-of-contents > a {
   display: block;
+  margin: 0.25vw;
 }
 
-span.label {
-  font-weight: bold;
-  padding: 2px;
+.table-of-contents > a:link {
+  color: mediumblue;
 }
 
-span.text {
-  position: relative;
-  top: 2px;
+.table-of-contents > a:hover {
+  color: darkorchid;
 }
 
-.info > .meta > span.label {
-  background-color: lightsalmon;
+body > .element {
+  position: absolute;
+  right: 0.5vw;
+  width: 80vw;
+  margin: 0px;
 }
 
-.fail > .meta > span.label {
-  background-color: crimson;
+.element {
+  margin: 0.5vw;
+  padding: 0.5vw;
+  background-color: snow;
+  border: 0.15vw solid midnightblue;
+  border-radius: 0.5vw;
 }
 
-.info > .meta > span.label:hover {
-  background-color: peachpuff;
-}
-
-.fail > .meta > span.label:hover {
-  background-color: salmon;
+.element:target {
+  background-color: pink;
+  animation-name: background-flash;
+  animation-duration: 2s;
 }
 
 .meta {
-  position: relative;
-  height: 100%;
+  display: inline-flex;
+  margin-left: 0.5vw;
 }
 
-.meta:hover > .tooltip {
-  display: inherit;
+.meta > .name {
+  padding: 0.1vw;
+  font-weight: bold;
+  border-radius: 0.5vw;
+  color: darkgreen;
 }
 
-.tooltip {
+.meta.with-tooltip > .name {
+  color: firebrick;
+  
+  /* uncomment to enable flashy text on erroneous elements (seizure alert)
+  animation-name: text-flash;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+  */
+}
+
+.meta > .tooltip {
+  
+  /* uncomment to remove tooltips unless hovered upon
   display: none;
-  position: absolute;
-  left: 101%;
-  top: -2px;
+  */
+  
   z-index: 1;
+  position: relative;
+  margin-left: 0.75vw;
+  padding: 0.25vw;
+  border: 0.15vw solid darkred;
+  border-radius: 0.5vw;
+  color: darkred;
+  background-color: mistyrose;
 }
 
-.tooltip tr {
-  display: flex;
+.meta.with-tooltip:hover > .tooltip {
+  display: inline-block;
+  animation-name: background-flash;
+  animation-duration: 1s;
 }
 
-.message {
-  background-color: salmon;
+.tooltip:after {
+  content: " ";
+  position: absolute;
+  top: 0.5vw;
+  right: 100%;
+  margin-top: -0.4vw;
+  border: 0.4vw solid;
+  border-color: transparent darkred transparent transparent;
 }
 
-.message .role {
+.tooltip > .text {
+  display: block;
+}
+
+.tooltip > .role {
+  display: block;
   font-weight: bold;
 }
 
-.attribute {
-  background-color: peachpuff;
+.tooltip > .role:before {
+  content: "[";
 }
 
-.attribute .label {
+.tooltip > .role:after {
+  content: "]";
+}
+
+.tooltip > .docu {
+  display: block;
+}
+
+.attributes {
+  display: table;
+  margin: 0.5vw;
+  padding: 0.5vw;
+  background: linear-gradient(aliceblue, white, aliceblue);
+  border: 0.1vw solid royalblue;
+  border-left: 0.25vw solid royalblue;
+  color: navy;
+}
+
+.attributes > .attribute {
+  display: table-row;
+}
+
+.attributes > .attribute > .name {
+  display: table-cell;
   font-weight: bold;
+}
+
+.attributes > .attribute > .value {
+  display: table-cell;
+  padding-left: 1vw;
+}
+
+.contents {
+  margin: 0.5vw;
+  padding: 0.5vw;
+  background: linear-gradient(mintcream, white, mintcream);
+  border: 0.1vw solid teal;
+  border-left: 0.25vw solid teal;
+  color: darkslategray;
+}
+
+@keyframes background-flash {
+  from {
+    background-color: crimson;
+  }
+}
+
+@keyframes text-flash {
+  from {
+    background-color: salmon;
+    color: red;
+  }
 }

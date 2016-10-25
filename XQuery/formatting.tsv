@@ -1,0 +1,5 @@
+source-element	source-attribute	source-attribute-value	target-element	target-style
+p	altrender	red	p	color:red
+p			p	color:black
+date			date	
+
