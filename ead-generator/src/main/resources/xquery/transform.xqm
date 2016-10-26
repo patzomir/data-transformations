@@ -117,7 +117,7 @@ declare function transform:evaluate-xquery(
   $xquery as xs:string?,
   $context as item()
 ) as item()* {
-  if ($xquery) then xquery:eval($xquery, map { "": $context }) else ()
+  if ($xquery) then xquery:eval(fn:concat("import module namespace xtra = ""xtra"" at ""xtra.xqm"";", $xquery), map { "": $context }) else ()
 };
 
 declare function transform:ebv(
