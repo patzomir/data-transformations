@@ -5,10 +5,13 @@ module namespace xtra = "xtra";
 
 declare function xtra:normalize-date-interval(
   $date-interval as xs:string
-) as xs:string? {
+) as xs:string? {  
   let $dates := fn:tokenize($date-interval, "-")
   return if (fn:count($dates) = 1) then xtra:normalize-date($dates[1])
-    else if (fn:count($dates) = 2) then fn:concat(xtra:normalize-date($dates[1]), "/", xtra:normalize-date($dates[2]))
+    else if (fn:count($dates) = 2) then
+      let $date-from := xtra:normalize-date($dates[1])
+      let $date-to := xtra:normalize-date($dates[2])
+      return if ($date-from and $date-to) then fn:concat($date-from, "/", $date-to) else ()
     else ()
 };
 
@@ -57,14 +60,14 @@ declare function xtra:xtract-matches(
 (: extract the parts of the given string that separate the given tokens :)
 declare function xtra:xtract-splits(
   $string as xs:string,
-  $tokens as xs:string+
+  $tokens as xs:string*
 ) as xs:string* {
-  if (fn:count($tokens) = 1) then ()
-  else
+  if (fn:count($tokens) > 1) then
     let $string := fn:substring($string, fn:string-length($tokens[1]) + 1)
     let $split := if (fn:string-length($tokens[2]) = 0) then $string else fn:substring-before($string, $tokens[2])
     
     let $string := fn:substring($string, fn:string-length($split) + 1)
     let $tokens := fn:subsequence($tokens, 2)
     return ($split, xtra:xtract-splits($string, $tokens))
+  else ()
 };
